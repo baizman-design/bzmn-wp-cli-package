@@ -166,6 +166,9 @@ class cli {
 	 *   - csv
 	 *   - yaml
 	 *
+	 * [--include_built_ins]
+	 * : Include built-in post types.
+	 *
 	 * ## EXAMPLES
 	 *
 	 * wp bzmn print-custom-post-types
@@ -177,32 +180,50 @@ class cli {
 		$assoc_args,
 	):void
 	{
-		global $wpdb;
 		$defaults = [
-			'order_by' => 'post_type',
-			'order_by_direction' => 'ASC',
 			'format' => 'table',
+			'include_built_ins' => false,
+			'sort_by' => 'name', // post type label. corresponds to custom array in $post_types.
 		];
 		$assoc_args = wp_parse_args (
 			args: $assoc_args,
 			defaults: $defaults,
 		);
 		extract( $assoc_args );
-		// TODO: add human-readable post type name.
-		$query = sprintf( /** @lang text */ 'SELECT count(*) AS count, post_type FROM %3$s GROUP BY post_type ORDER BY %1$s %2$s',
-			$order_by,
-			$order_by_direction,
-			$wpdb->posts,
+		$args = [];
+		if ( ! $include_built_ins ) {
+			$args = [
+				'_builtin' => false,
+			];
+		}
+		$custom_post_type_objects = get_post_types(
+			args: $args,
+			output: 'objects',
 		);
-		$items = $wpdb->get_results(
-			query: $query,
-			output: ARRAY_A,
+		$post_types = [];
+		// this structure simplifies the format of the array elements.
+		array_map(
+			callback: function( $custom_post_type ) use ( & $post_types ){
+				$post_types[] = [
+					'name' => $custom_post_type->label,
+					'slug' => $custom_post_type->name,
+					'public?' => $custom_post_type->public ? 'X': '',
+					'custom?' => $custom_post_type->_builtin ? '': 'X',
+				];
+			},
+			array: $custom_post_type_objects,
 		);
-		$columns = $wpdb->get_col_info();
+		// sort $post_types by $sort_by.
+		uasort(
+			array: $post_types,
+			callback: function( $a, $b ) use ( $sort_by ) {
+				return strnatcasecmp( $a[$sort_by], $b[$sort_by] );
+			}
+		);
 		WP_CLI\Utils\format_items(
 			format: $format,
-			items: $items,
-			fields: $columns
+			items: $post_types,
+			fields: array_keys( $post_types[0] ),
 		);
 	}
 
