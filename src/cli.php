@@ -63,9 +63,8 @@ class cli {
      * Print image sizes.
 	 *
      * [--fields=<fields>]
-	 * : Output specific fields.
+	 * : Output specific fields. The default is all fields.
 	 * ---
-	 * default: all
 	 * options:
 	 *   - size
 	 *   - width
@@ -86,6 +85,8 @@ class cli {
      *
      * wp bzmn print-image-sizes
      * wp bzmn print-image-sizes --format=table
+     * wp bzmn print-image-sizes --fields=size,crop
+     * wp bzmn print-image-sizes --fields=size,crop --format=csv
      *
      * @subcommand print-image-sizes
      */
@@ -107,7 +108,7 @@ class cli {
 				separator: ',',
 				array: $default_fields,
 			),
-			];
+		];
         $assoc_args = wp_parse_args(
             args: $assoc_args,
             defaults: $defaults
@@ -117,33 +118,23 @@ class cli {
 			separator: ',',
 			string: $fields,
 		);
-		$additional_fields = [];
         // https://developer.wordpress.org/reference/functions/wp_get_registered_image_subsizes/
-		$invalid_fields = array_diff(
-			$requested_fields, // the array that might hold an invalid field.
-			$default_fields,
-			$additional_fields,
-		);
-		if ( $invalid_fields ) {
-			WP_CLI::error(sprintf( 'Invalid field%2$s: "%1$s".',
-				implode( separator: '", "', array: $invalid_fields ),
-				count( $invalid_fields ) > 1 ? 's' : '',
-			));
-		}
 		$registered_image_subsizes = wp_get_registered_image_subsizes();
         if ( $registered_image_subsizes ) {
             $items = [];
-            foreach ($registered_image_subsizes as $size => $details) {
+            foreach ( $registered_image_subsizes as $size => $details ) {
 				$width = $details['width'];
 				$height = $details['height'];
 				$crop = $details['crop'] ? 'Y' : 'N';
                 $items[] = compact( $requested_fields );
             }
-            WP_CLI\Utils\format_items(
-                format: $format,
-                items: $items,
-                fields: array_keys($items[0]),
-            );
+			if ( $items ) {
+	            WP_CLI\Utils\format_items(
+	                format: $format,
+	                items: $items,
+	                fields: array_keys($items[0]),
+	            );
+			}
         } else {
             WP_CLI::warning(
                 message: 'No image sizes were detected.',
