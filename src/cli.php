@@ -452,4 +452,20 @@ class cli {
 		}
 	}
 
+	/**
+	 * Pluralize a word, if needed.
+	 *
+	 * @param int $count
+	 * @param string $plural_suffix
+	 *
+	 * @return string
+	 */
+	private function pluralize (
+		int $count,
+		string $plural_suffix = 's'
+	):string
+	{
+		return count( $count ) > 1 ? $plural_suffix : '';
+	}
+
 }
