@@ -431,6 +431,96 @@ class cli {
 	}
 
 	/**
+	 * Toggle the boolean value of the WP_DEBUG constant in wp-config.php.
+	 *
+	 * ## EXAMPLES
+	 *
+	 * wp bzmn toggle-debug
+	 *
+	 * @when before_wp_load
+	 * @subcommand toggle-debug
+	 * @alias toggle_debug
+	 */
+	public function toggle_debug():void {
+		$constant = 'WP_DEBUG';
+		$command_options = [
+			'return' => true,  // capture and return output.
+			'launch' => false, // reuse the current process.
+			'exit_error' => true, // halt script execution on error.
+		];
+		// get current setting.
+		$current_value = WP_CLI::runcommand(
+			command: sprintf( 'config get %1$s',
+				$constant,
+			),
+			options: $command_options,
+		);
+		// set to opposite of current setting.
+		$new_value_message = WP_CLI::runcommand(
+			command: sprintf( 'config set %1$s %2$s --raw',
+				$constant,
+				! ! $current_value ? 'false' : 'true',
+			),
+			options: $command_options,
+		);
+		if ( str_contains( haystack: $new_value_message, needle: 'Success:' ) ) {
+			WP_CLI::success( sprintf( '%1$s is %2$s.',
+				$constant,
+				! $current_value ? 'enabled' : 'disabled',
+			));
+		} else {
+			WP_CLI::error( sprintf( '%1$s could not be updated.',
+				$constant,
+			));
+		}
+	}
+
+	/**
+	 * Toggle the boolean value of the WP_DEBUG_DISPLAY constant in wp-config.php.
+	 *
+	 * ## EXAMPLES
+	 *
+	 * wp bzmn toggle-debug
+	 *
+	 * @when before_wp_load
+	 * @subcommand toggle-debug-display
+	 * @alias toggle_debug_display
+	 */
+	public function toggle_debug_display():void {
+		$constant = 'WP_DEBUG_DISPLAY';
+		$command_options = [
+			'return' => true,  // capture and return output.
+			'launch' => false, // reuse the current process.
+			'exit_error' => true, // halt script execution on error.
+		];
+		// get current setting.
+		$current_value = WP_CLI::runcommand(
+			command: sprintf( 'config get %1$s',
+				$constant,
+			),
+			options: $command_options,
+		);
+		// set to opposite of current setting.
+		$new_value_message = WP_CLI::runcommand(
+			command: sprintf( 'config set %1$s %2$s --raw',
+				$constant,
+				! ! $current_value ? 'false' : 'true',
+			),
+			options: $command_options,
+		);
+		if ( str_contains( haystack: $new_value_message, needle: 'Success:' ) ) {
+			WP_CLI::success( sprintf( '%1$s is %2$s.',
+				$constant,
+				! $current_value ? 'enabled' : 'disabled',
+			));
+		} else {
+			WP_CLI::error( sprintf( '%1$s could not be updated.',
+				$constant,
+			));
+		}
+	}
+
+	/**
 	 * Back up the database.
 	 *
 	 * @return void
@@ -438,9 +528,9 @@ class cli {
 	private function backup_database ():void
 	{
 		$command_options = [
-			'return'     => true,   // Capture and return output
-			'launch'     => false,  // Reuse the current process.
-			'exit_error' => true,   // Halt script execution on error.
+			'return' => true, // capture and return output.
+			'launch' => false, // reuse the current process.
+			'exit_error' => true, // halt script execution on error.
 		];
 		if ( ! $this->dry_run ) {
 			WP_CLI::log( message: 'backing up the database...' );
