@@ -51,7 +51,7 @@ class cli {
 	 *
 	 * @subcommand print-wp-environment
 	 */
-	public function print_wp_environment ( ):void
+	public function print_wp_environment():void
 	{
 		WP_CLI::log( sprintf( 'environment: %1$s',
 			wp_get_environment_type(),
@@ -429,7 +429,7 @@ class cli {
 	 *
 	 * @return void
 	 */
-	private function backup_database ( ):void
+	private function backup_database ():void
 	{
 		$command_options = [
 			'return'     => true,   // Capture and return output
