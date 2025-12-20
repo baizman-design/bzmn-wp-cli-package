@@ -95,7 +95,6 @@ class cli {
         $assoc_args,
     ): void
     {
-		// FIXME: this has a bug. Command does not work without specifying one or more fields.
 		$default_fields = [
 			'size',
 			'width',
