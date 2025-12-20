@@ -26,15 +26,18 @@ class cli {
 	 * @subcommand flush-rewrite-rules
 	 */
 	public function flush_rewrite_rules(
-		$args,
-		$assoc_args,
+		array $args = [],
+		array $assoc_args = [],
 	):void
 	{
 		// https://developer.wordpress.org/reference/functions/flush_rewrite_rules/
 		$defaults = [
 			'hard' => false,
 		];
-		$assoc_args = wp_parse_args ( $assoc_args, $defaults ) ;
+		$assoc_args = wp_parse_args(
+			args: $assoc_args,
+			defaults: $defaults,
+		);
 		extract( $assoc_args );
 		flush_rewrite_rules( hard: $hard );
 		WP_CLI::success ( sprintf( 'The rewrite rules have been %1$s-flushed.',
@@ -91,8 +94,8 @@ class cli {
      * @subcommand print-image-sizes
      */
     public function print_image_sizes(
-        $args,
-        $assoc_args,
+		array $args = [],
+		array $assoc_args = [],
     ): void
     {
 		$default_fields = [
@@ -142,7 +145,7 @@ class cli {
     }
 
 	/**
-	 * Print custom post types and counts.
+	 * Print custom post types.
 	 *
 	 * ## OPTIONS
 	 *
@@ -156,7 +159,7 @@ class cli {
 	 *   - csv
 	 *   - yaml
 	 *
-	 * [--include_built_ins]
+	 * [--include_builtins]
 	 * : Include built-in post types.
 	 *
 	 * ## EXAMPLES
@@ -166,13 +169,13 @@ class cli {
 	 * @subcommand print-custom-post-types
 	 */
 	public function print_custom_post_types (
-		$args,
-		$assoc_args,
+		array $args = [],
+		array $assoc_args = [],
 	):void
 	{
 		$defaults = [
 			'format' => 'table',
-			'include_built_ins' => false,
+			'include_builtins' => false,
 			'sort_by' => 'name', // post type label. corresponds to custom array in $post_types.
 		];
 		$assoc_args = wp_parse_args (
@@ -181,7 +184,7 @@ class cli {
 		);
 		extract( $assoc_args );
 		$args = [];
-		if ( ! $include_built_ins ) {
+		if ( ! $include_builtins ) {
 			$args = [
 				'_builtin' => false,
 			];
@@ -238,8 +241,8 @@ class cli {
 	 * @subcommand set-toolset-post-type-pagination
     */
 	public function set_toolset_post_type_pagination(
-		$args,
-		$assoc_args,
+		array $args = [],
+		array $assoc_args = [],
 	):void
 	{
 		list ( $email, $pagination ) = $args ;
@@ -299,7 +302,7 @@ class cli {
      *
      * @subcommand delete-wc-transients
      */
-    public function delete_wc_transients(): void
+    public function delete_wc_transients():void
     {
         // https://woocommerce.com/document/woopayments/customization-and-translation/customize-payments-appearance/
 		$transients = [
@@ -348,27 +351,31 @@ class cli {
 	 * <post_type>
 	 * : The post type.
 	 *
-	 * [--dry-run]
+	 * [--dry_run]
 	 * : Dry run. Do not modify the database.
 	 *
 	 * ## EXAMPLES
 	 *
 	 * wp bzmn populate-post-meta wpcf-hide-page-in-navigation 0 page
-	 * wp bzmn populate-post-meta wpcf-hide-page-in-navigation 0 page --dry-run
+	 * wp bzmn populate-post-meta wpcf-hide-page-in-navigation 0 page --dry_run
 	 *
 	 * @subcommand populate-post-meta
 	 */
 	public function populate_post_meta(
-		$args,
-		$assoc_args,
+		array $args = [],
+		array $assoc_args = [],
 	):void
 	{
 		$defaults = [
-			'dry-run' => false,
+			'dry_run' => false,
 		];
-		$assoc_args = wp_parse_args ( $assoc_args, $defaults ) ;
-		$this->dry_run = $assoc_args['dry-run'] ;
-		list ( $field, $value, $post_type ) = $args ;
+		$assoc_args = wp_parse_args(
+			args: $assoc_args,
+			defaults: $defaults,
+		);
+		extract( $assoc_args );
+		$this->dry_run = $dry_run;
+		list ( $field, $value, $post_type ) = $args;
 
 		$posts = new WP_Query([
 			'post_type' => [$post_type],
