@@ -196,17 +196,23 @@ class cli {
 		$post_types = [];
 		// this structure simplifies the format of the array elements.
 		array_map(
-			callback: function( $custom_post_type ) use ( & $post_types ){
-				$post_types[] = [
+			callback: function( $custom_post_type ) use ( & $post_types, $include_builtins ){
+				$post_type = [
 					'name' => $custom_post_type->label,
 					'slug' => $custom_post_type->name,
 					'public?' => $custom_post_type->public ? 'X': '',
 					'custom?' => $custom_post_type->_builtin ? '': 'X',
 				];
+				// exclude field if we're only printing custom post types.
+				if ( ! $include_builtins ) {
+					unset( $post_type['custom?'] );
+				}
+				$post_types[] = $post_type;
 			},
 			array: $custom_post_type_objects,
 		);
-		// sort $post_types by $sort_by.
+		// sort $post_types by $sort_by value (default: "name").
+		// can be either "name" or "slug."
 		uasort(
 			array: $post_types,
 			callback: function( $a, $b ) use ( $sort_by ) {
