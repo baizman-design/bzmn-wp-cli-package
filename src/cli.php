@@ -161,12 +161,23 @@ class cli {
 	 *   - csv
 	 *   - yaml
 	 *
+	 * [--sort_by=<field>]
+	 * : Sort results. Options: name, slug. Default: name.
+	 * ---
+	 * default: name
+	 * options:
+	 *   - name
+	 *   - slug
+	 *
 	 * [--include_builtins]
 	 * : Include built-in post types.
 	 *
 	 * ## EXAMPLES
 	 *
 	 * wp bzmn print-custom-post-types
+	 * wp bzmn print-custom-post-types --sort_by=slug
+	 * wp bzmn print-custom-post-types --include_builtins
+	 * wp bzmn print-custom-post-types --include_builtins --sort_by=slug
 	 *
 	 * @subcommand print-custom-post-types
 	 * @alias print_custom_post_types
