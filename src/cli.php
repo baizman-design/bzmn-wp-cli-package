@@ -487,9 +487,9 @@ class cli {
 			options: $command_options,
 		);
 		if ( str_contains( haystack: $new_value_message, needle: 'Success:' ) ) {
-			WP_CLI::success( sprintf( '%1$s is %2$s.',
+			WP_CLI::success( sprintf( '%1$s is set to %2$s.',
 				$constant,
-				! $current_value ? 'enabled' : 'disabled',
+				! $current_value ? 'true' : 'false',
 			));
 		} else {
 			WP_CLI::error( sprintf( '%1$s could not be updated.',
@@ -532,9 +532,9 @@ class cli {
 			options: $command_options,
 		);
 		if ( str_contains( haystack: $new_value_message, needle: 'Success:' ) ) {
-			WP_CLI::success( sprintf( '%1$s is %2$s.',
+			WP_CLI::success( sprintf( '%1$s is set to %2$s.',
 				$constant,
-				! $current_value ? 'enabled' : 'disabled',
+				! $current_value ? 'true' : 'false',
 			));
 		} else {
 			WP_CLI::error( sprintf( '%1$s could not be updated.',
