@@ -197,14 +197,14 @@ class cli {
 			defaults: $defaults,
 		);
 		extract( $assoc_args );
-		$args = [];
+		$get_post_types_args = [];
 		if ( ! $include_builtins ) {
-			$args = [
+			$get_post_types_args = [
 				'_builtin' => false,
 			];
 		}
 		$custom_post_type_objects = get_post_types(
-			args: $args,
+			args: $get_post_types_args,
 			output: 'objects',
 		);
 		$post_types = [];
