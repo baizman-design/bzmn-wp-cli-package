@@ -24,6 +24,7 @@ class cli {
 	 * wp bzmn flush-rewrite-rules --hard
 	 *
 	 * @subcommand flush-rewrite-rules
+	 * @alias flush_rewrite_rules
 	 */
 	public function flush_rewrite_rules(
 		array $args = [],
@@ -53,6 +54,7 @@ class cli {
 	 * wp bzmn print-wp-environment
 	 *
 	 * @subcommand print-wp-environment
+	 * @alias print_wp_environment
 	 */
 	public function print_wp_environment():void
 	{
@@ -60,7 +62,6 @@ class cli {
 			wp_get_environment_type(),
 		));
 	}
-
 
     /**
      * Print image sizes.
@@ -92,6 +93,7 @@ class cli {
      * wp bzmn print-image-sizes --fields=size,crop --format=csv
      *
      * @subcommand print-image-sizes
+     * @alias print_image_sizes
      */
     public function print_image_sizes(
 		array $args = [],
@@ -167,6 +169,7 @@ class cli {
 	 * wp bzmn print-custom-post-types
 	 *
 	 * @subcommand print-custom-post-types
+	 * @alias print_custom_post_types
 	 */
 	public function print_custom_post_types (
 		array $args = [],
@@ -245,6 +248,7 @@ class cli {
 	 * wp bzmn set-toolset-post-type-pagination user@domain.com 25
 	 *
 	 * @subcommand set-toolset-post-type-pagination
+	 * @alias set_toolset_post_type_pagination
     */
 	public function set_toolset_post_type_pagination(
 		array $args = [],
@@ -307,6 +311,7 @@ class cli {
      * wp bzmn delete-wc-transients
      *
      * @subcommand delete-wc-transients
+     * @alias delete_wc_transients
      */
     public function delete_wc_transients():void
     {
@@ -366,6 +371,7 @@ class cli {
 	 * wp bzmn populate-post-meta wpcf-hide-page-in-navigation 0 page --dry_run
 	 *
 	 * @subcommand populate-post-meta
+	 * @alias populate_post_meta
 	 */
 	public function populate_post_meta(
 		array $args = [],
