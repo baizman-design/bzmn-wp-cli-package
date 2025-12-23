@@ -544,11 +544,162 @@ class cli {
 	}
 
 	/**
-	 * Back up the database.
+	 * Back up a website using All-in-One WP Migration and Backup.
+	 *
+	 * [--type=<type>]
+	 * : Type of backup. Options: quick, full, sql. Default: quick.
+	 * ---
+	 * default: quick
+	 * options:
+	 *   - quick
+	 *   - full
+	 *   - sql
+	 *
+	 * ## EXAMPLES
+	 *
+	 * wp bzmn backup
+	 * wp bzmn backup --type=quick
+	 * wp bzmn backup --type=full
+	 * wp bzmn backup --type=sql
+	 *
+     * @subcommand backup
+	 */
+	public function backup (
+		array $args = [],
+		array $assoc_args = [],
+	):void
+	{
+		$ai1wm = 'ai1wm';
+		$defaults = [
+			'type' => 'quick',
+		];
+		$assoc_args = wp_parse_args (
+			args: $assoc_args,
+			defaults: $defaults,
+		);
+		extract( $assoc_args );
+		// mysql dump.
+		if ( $type == 'sql' ) {
+			$this->backup_database();
+			WP_CLI::success( sprintf('%1$s backup succeeded.',
+				ucfirst( $type ),
+			));
+			// we're done here.
+			WP_CLI::halt( return_code: 0 );
+		}
+		// plugins to activate / deactivate.
+		$ai1wm_plugins = [
+			'all-in-one-wp-migration',
+			'all-in-one-wp-migration-multisite-extension',
+		];
+		// arguments for quick backup, sans "--".
+		$quick_backup_args = [
+			'exclude-spam-comments',
+			'exclude-post-revisions',
+			'exclude-media',
+			'exclude-themes',
+			'exclude-inactive-themes',
+			'exclude-muplugins',
+			'exclude-plugins',
+			'exclude-inactive-plugins',
+			'exclude-cache',
+			'exclude-email-replace',
+		];
+		// prepend double-dash to all quick backup arguments.
+		$quick_backup_args = array_map(
+			callback: fn ( $arg ) => '--' . $arg,
+			array: $quick_backup_args,
+		);
+		// default parameters to WP_CLI::runcommand().
+		$runcommand_option_defaults = [
+			'return' => true,  // capture and return output.
+			'launch' => false, // reuse the current process.
+			'exit_error' => true, // halt script execution on error.
+		];
+		// is this a multisite installation?
+		$has_command_return_options = wp_parse_args (
+			args: [
+				'return' => 'return_code', // only return status code (0 for yes or 1 for no).
+				'exit_error' => false, // don't exit on error.
+			],
+			defaults: $runcommand_option_defaults,
+		);
+		// check that the two required plugins are present.
+		$has_command_return_value = WP_CLI::runcommand(
+			command: sprintf( 'cli has-command %1$s',
+				$ai1wm,
+			),
+			options: $has_command_return_options,
+		);
+		// if the command was not present, activate the necessary plugins.
+		if ( $has_command_return_value == '1' ) {
+			WP_CLI::log( sprintf( 'Activating plugins %1$s...',
+				implode( separator: ' ', array: $ai1wm_plugins ),
+			));
+			$return_message = WP_CLI::runcommand(
+				command: sprintf( 'plugin activate %1$s',
+					implode( separator: ' ', array: $ai1wm_plugins ),
+				),
+				options: $runcommand_option_defaults,
+			);
+			WP_CLI::log( sprintf( '%1$s',
+				$return_message,
+			));
+		} else {
+			WP_CLI::log( sprintf( 'Plugins %1$s are already activated. Continuing...',
+				implode( separator: ' and ', array: $ai1wm_plugins ),
+			));
+		}
+		$ai1wm_command_arguments = '';
+		if ( $type == 'quick' ) {
+			$ai1wm_command_arguments = implode( separator: ' ', array: $quick_backup_args );
+		}
+		WP_CLI::log( sprintf( 'Backup type: %1$s',
+			$type,
+		));
+		WP_CLI::log( sprintf( 'Backup site: %1$s...',
+			get_site_url(),
+		));
+		$backup_command_return_options = wp_parse_args (
+			args: [
+				'launch' => $has_command_return_value == '1', // if needed, run in new process because we've modified the WordPress environment when we activated plugins.
+			],
+			defaults: $runcommand_option_defaults,
+		);
+		$return_message = WP_CLI::runcommand(
+			command: sprintf( '%1$s backup %2$s',
+				$ai1wm,
+				$ai1wm_command_arguments,
+			),
+			options: $backup_command_return_options,
+		);
+		WP_CLI::log( sprintf( '%1$s',
+			$return_message,
+		));
+		WP_CLI::log( sprintf( 'Deactivating plugins %1$s...',
+			implode( separator: ' ', array: $ai1wm_plugins ),
+		));
+		// always deactivate the plugins. (but maybe not if they were already active?)
+		$return_message = WP_CLI::runcommand(
+			command: sprintf( 'plugin deactivate %1$s',
+				implode( separator: ' ', array: $ai1wm_plugins ),
+			),
+			options: $runcommand_option_defaults,
+		);
+		WP_CLI::log( sprintf( '%1$s',
+			$return_message,
+		));
+		WP_CLI::success( sprintf( '%1$s backup succeeded.',
+			ucfirst( $type ),
+		));
+	}
+
+	/**
+	 * Create a MySQL dump of the database.
 	 *
 	 * @return void
 	 */
-	private function backup_database ():void
+	private function backup_database():void
 	{
 		$command_options = [
 			'return' => true, // capture and return output.
