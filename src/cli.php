@@ -563,6 +563,7 @@ class cli {
 	 * wp bzmn backup --type=sql
 	 *
      * @subcommand backup
+     * @alias back
 	 */
 	public function backup (
 		array $args = [],
@@ -616,7 +617,8 @@ class cli {
 			'launch' => false, // reuse the current process.
 			'exit_error' => true, // halt script execution on error.
 		];
-		// is this a multisite installation?
+		// is this a multisite installation? if so, add flag for activate / deactivate commands.
+		$network_flag = is_multisite() ? '--network' : '';
 		$has_command_return_options = wp_parse_args (
 			args: [
 				'return' => 'return_code', // only return status code (0 for yes or 1 for no).
@@ -637,8 +639,9 @@ class cli {
 				implode( separator: ' ', array: $ai1wm_plugins ),
 			));
 			$return_message = WP_CLI::runcommand(
-				command: sprintf( 'plugin activate %1$s',
+				command: sprintf( 'plugin activate %1$s %2$s',
 					implode( separator: ' ', array: $ai1wm_plugins ),
+					$network_flag,
 				),
 				options: $runcommand_option_defaults,
 			);
@@ -681,8 +684,9 @@ class cli {
 		));
 		// always deactivate the plugins. (but maybe not if they were already active?)
 		$return_message = WP_CLI::runcommand(
-			command: sprintf( 'plugin deactivate %1$s',
+			command: sprintf( 'plugin deactivate %1$s %2$s',
 				implode( separator: ' ', array: $ai1wm_plugins ),
+				$network_flag,
 			),
 			options: $runcommand_option_defaults,
 		);
