@@ -595,6 +595,7 @@ class cli {
 			// we're done here.
 			WP_CLI::halt( return_code: 0 );
 		}
+		$wp_path = WP_CLI::get_config( key: 'path' ) ?? '.';
 		// plugins to activate / deactivate.
 		$ai1wm_plugins = [
 			'all-in-one-wp-migration',
@@ -623,6 +624,7 @@ class cli {
 			'return' => true,  // capture and return output.
 			'launch' => false, // reuse the current process.
 			'exit_error' => true, // halt script execution on error.
+			'command_args' => [ '--path=' . $wp_path, ], // add path (necessary when an alias is used).
 		];
 		// is this a multisite installation? if so, add flag for activate / deactivate commands.
 		$network_flag = is_multisite() ? '--network' : '';
