@@ -626,27 +626,54 @@ class cli {
 			],
 			defaults: $runcommand_option_defaults,
 		);
-		// check that the two required plugins are present.
-		$has_command_return_value = WP_CLI::runcommand(
-			command: sprintf( 'cli has-command %1$s',
-				$ai1wm,
-			),
-			options: $has_command_return_options,
+		$has_ai1wm_command = $this->has_ai1wm_plugins(
+			command_name: $ai1wm,
+			runcommand_options: $has_command_return_options,
 		);
+		WP_CLI::debug( sprintf( '$has_ai1wm_command: %1$s',
+			$has_ai1wm_command ? 'true' : 'false',
+		));
 		// if the command was not present, activate the necessary plugins.
-		if ( $has_command_return_value == '1' ) {
+		if ( ! $has_ai1wm_command ) {
 			WP_CLI::log( sprintf( 'Activating plugins %1$s...',
 				implode( separator: ' ', array: $ai1wm_plugins ),
 			));
-			$return_message = WP_CLI::runcommand(
+			// TODO: check return status of this command.
+			// if it fails, error() out.
+			$plugin_activate_options = wp_parse_args (
+				args: [
+					'return' => 'all', // only return status code (0 for yes or 1 for no).
+					'exit_error' => false, // don't exit on error.
+				],
+				defaults: $runcommand_option_defaults,
+			);
+			$plugin_activate_message = WP_CLI::runcommand(
 				command: sprintf( 'plugin activate %1$s %2$s',
 					implode( separator: ' ', array: $ai1wm_plugins ),
 					$network_flag,
 				),
-				options: $runcommand_option_defaults,
+				options: $plugin_activate_options,
 			);
+			if ( $plugin_activate_message->return_code == '1' ) {
+				WP_CLI::log( $plugin_activate_message->stdout );
+				WP_CLI::log( $plugin_activate_message->stderr );
+				WP_CLI::halt( return_code: 1 );
+			}
+			$has_command_return_options['launch'] = true;
+			$has_ai1wm_command = $this->has_ai1wm_plugins(
+				command_name:$ai1wm,
+				runcommand_options: $has_command_return_options,
+			);
+			WP_CLI::debug( sprintf( '$has_ai1wm_command: %1$s',
+				$has_ai1wm_command ? 'true' : 'false',
+			));
+			if ( ! $has_ai1wm_command) {
+				WP_CLI::error(sprintf('the %s plugins could not be activated.',
+					implode( separator: ' ', array: $ai1wm_plugins ),
+				));
+			}
 			WP_CLI::log( sprintf( '%1$s',
-				$return_message,
+				$plugin_activate_message->stdout,
 			));
 		} else {
 			WP_CLI::log( sprintf( 'Plugins %1$s are already activated. Continuing...',
@@ -665,7 +692,7 @@ class cli {
 		));
 		$backup_command_return_options = wp_parse_args (
 			args: [
-				'launch' => $has_command_return_value == '1', // if needed, run in new process because we've modified the WordPress environment when we activated plugins.
+				'launch' => true, // run in new process because we've modified the WordPress environment when we activated plugins.
 			],
 			defaults: $runcommand_option_defaults,
 		);
@@ -724,6 +751,30 @@ class cli {
 		else {
 			WP_CLI::log( message: '...skipping backup on dry-run...' );
 		}
+	}
+
+	/**
+	 * @param string $command_name
+	 * @param array $runcommand_options
+	 *
+	 * @return bool
+	 */
+	private function has_ai1wm_plugins (
+		string $command_name,
+		array $runcommand_options,
+	):bool
+	{
+		// check that the two required plugins are present.
+		$return_code = WP_CLI::runcommand(
+			command: sprintf( 'cli has-command %1$s',
+				$command_name,
+			),
+			options: $runcommand_options,
+		);
+		WP_CLI::debug( sprintf( '$return_code: %1$s',
+			$return_code,
+		));
+		return ! ( $return_code == '1' );
 	}
 
 	/**
