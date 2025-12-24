@@ -3,6 +3,7 @@
 namespace baizman_design_cli;
 
 use WP_CLI;
+use WP_CLI\ExitException;
 use WP_Query;
 
 class cli {
@@ -581,7 +582,11 @@ class cli {
 		extract( $assoc_args );
 		// mysql dump.
 		if ( $type == 'sql' ) {
-			$this->backup_database();
+			$this->backup_database( file: sprintf('%1$s/%2$s-%3$s-export.sql',
+				untrailingslashit( ABSPATH ),
+				DB_NAME,
+				date( 'YmdHis' ),
+			));
 			WP_CLI::success( sprintf('%1$s backup succeeded.',
 				ucfirst( $type ),
 			));
@@ -667,10 +672,13 @@ class cli {
 			WP_CLI::debug( sprintf( '$has_ai1wm_command: %1$s',
 				$has_ai1wm_command ? 'true' : 'false',
 			));
-			if ( ! $has_ai1wm_command) {
-				WP_CLI::error(sprintf('the %s plugins could not be activated.',
-					implode( separator: ' ', array: $ai1wm_plugins ),
-				));
+			if ( ! $has_ai1wm_command ) {
+				WP_CLI::error(
+					message: sprintf( 'the %s plugins could not be activated.',
+						implode( separator: ' ', array: $ai1wm_plugins ),
+					),
+					exit: true,
+				);
 			}
 			WP_CLI::log( sprintf( '%1$s',
 				$plugin_activate_message->stdout,
@@ -728,23 +736,36 @@ class cli {
 	/**
 	 * Create a MySQL dump of the database.
 	 *
+	 * @param string $file
+	 *
 	 * @return void
+	 * @throws ExitException
 	 */
-	private function backup_database():void
+	private function backup_database(
+		string $file = '',
+	):void
 	{
-		$command_options = [
-			'return' => true, // capture and return output.
+		$runcommand_options = [
+			'return' => 'all', // capture and return output.
 			'launch' => false, // reuse the current process.
 			'exit_error' => true, // halt script execution on error.
 		];
 		if ( ! $this->dry_run ) {
 			WP_CLI::log( message: 'backing up the database...' );
 			$output = WP_CLI::runcommand(
-				command: 'db export --porcelain',
-				options: $command_options,
+				command: sprintf( 'db export %1$s --porcelain',
+					$file,
+				),
+				options: $runcommand_options,
 			);
+			if ( $output->return_code == '1' ) {
+				WP_CLI::error(
+					message: $output->stderr,
+					exit: true,
+				);
+			}
 			WP_CLI::log( sprintf( 'backup filename: %1$s',
-				$output,
+				$output->stdout,
 			));
 			WP_CLI::log( message: '...done' );
 		}
