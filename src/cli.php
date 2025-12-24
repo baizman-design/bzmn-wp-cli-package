@@ -48,7 +48,9 @@ class cli {
 	}
 
 	/**
-	 * Print the current environment.
+	 * Print the environment type.
+	 *
+	 * Displays the value of the WP_ENVIRONMENT_TYPE constant.
 	 *
 	 * ## EXAMPLES
 	 *
@@ -65,7 +67,7 @@ class cli {
 	}
 
     /**
-     * Print image sizes.
+     * Print the image sizes registered via add_image_size().
 	 *
      * [--fields=<fields>]
 	 * : Output specific fields. The default is all fields.
@@ -545,7 +547,7 @@ class cli {
 	}
 
 	/**
-	 * Back up a website using All-in-One WP Migration and Backup.
+	 * Back up a website using All-in-One WP Migration and Backup plugins.
 	 *
 	 * [--type=<type>]
 	 * : Type of backup. Options: quick, full, sql. Default: quick.
