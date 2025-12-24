@@ -741,19 +741,25 @@ class cli {
 	 * Create a MySQL dump of the database.
 	 *
 	 * @param string $file
+	 * @param array $override_options
 	 *
 	 * @return void
 	 * @throws ExitException
 	 */
 	private function backup_database(
 		string $file = '',
+		array $override_options = [],
 	):void
 	{
-		$runcommand_options = [
+		$runcommand_options_defaults = [
 			'return' => 'all', // capture and return output.
 			'launch' => false, // reuse the current process.
 			'exit_error' => true, // halt script execution on error.
 		];
+		$runcommand_options = wp_parse_args (
+			args: $override_options,
+			defaults: $runcommand_options_defaults,
+		);
 		if ( ! $this->dry_run ) {
 			WP_CLI::log( message: 'backing up the database...' );
 			$output = WP_CLI::runcommand(
