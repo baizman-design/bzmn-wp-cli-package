@@ -635,7 +635,7 @@ class cli {
 			],
 			defaults: $runcommand_option_defaults,
 		);
-		$has_ai1wm_command = $this->has_ai1wm_plugins(
+		$has_ai1wm_command = $this->has_command(
 			command_name: $ai1wm,
 			runcommand_options: $has_command_return_options,
 		);
@@ -669,7 +669,7 @@ class cli {
 				WP_CLI::halt( return_code: 1 );
 			}
 			$has_command_return_options['launch'] = true;
-			$has_ai1wm_command = $this->has_ai1wm_plugins(
+			$has_ai1wm_command = $this->has_command(
 				command_name:$ai1wm,
 				runcommand_options: $has_command_return_options,
 			);
@@ -779,12 +779,14 @@ class cli {
 	}
 
 	/**
+	 * Check whether a WP CLI command is available.
+	 *
 	 * @param string $command_name
 	 * @param array $runcommand_options
 	 *
 	 * @return bool
 	 */
-	private function has_ai1wm_plugins (
+	private function has_command (
 		string $command_name,
 		array $runcommand_options,
 	):bool
