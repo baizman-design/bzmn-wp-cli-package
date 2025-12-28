@@ -762,6 +762,77 @@ class cli {
 	}
 
 	/**
+	 * Clear the Sucuri firewall cache.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <api_key>
+	 * : Sucuri API key.
+	 *
+	 * <api_secret>
+	 * : Sucuri API secret.
+	 *
+	 * [<filename>]
+	 * : A filename to remove from the cache.
+	 *
+	 * ## EXAMPLES
+	 *
+	 * wp bzmn clear-sucuri-cache 12345 ABCDE
+	 * wp bzmn clear-sucuri-cache 12345 ABCDE index.php
+	 *
+	 * @subcommand clear-sucuri-cache
+	 * @alias clear_sucuri_cache
+	 */
+	public function clear_sucuri_cache (
+		array $args = [],
+		array $assoc_args = [],
+	):void
+	{
+		list( $api_key, $api_secret, $filename, ) = $args;
+		$data = [
+			'k' => $api_key, // key
+			's' => $api_secret, // secret
+			'a' => 'clear_cache', // action
+		] ;
+		$message = 'Attempting to clear the cache for' ;
+		// append filename to array, if needed.
+		if ( $filename ) {
+			$data['file'] = $filename;
+			$message .= sprintf(' "%1$s"',
+				$filename,
+			);
+		} else {
+			$message .= ' the entire domain';
+		}
+		$message .= '...';
+		WP_CLI::log( $message );
+		// https://waf.sucuri.net/?settings&site=lifetimearts.org&panel=api
+		$response = wp_remote_post (
+			url: 'https://waf.sucuri.net/api?v2',
+			args: [
+				'body' => $data,
+			]
+		);
+		$response_code = wp_remote_retrieve_response_code( response: $response );
+		$body = json_decode(
+			json: wp_remote_retrieve_body( $response ),
+			associative: true,
+		);
+		$response_message = implode(
+			separator: ', ',
+			array: $body['messages'],
+		);
+		// "1" is success, "0" for failure.
+		$command_status = $body['status'];
+		// note: errors also return a 200 status code.
+		if ( $response_code == 200 && $command_status == '1' ) {
+			WP_CLI::success( $response_message );
+		} else {
+			WP_CLI::error( $response_message );
+		}
+	}
+
+	/**
 	 * Create a MySQL dump of the database.
 	 *
 	 * @param string $file
