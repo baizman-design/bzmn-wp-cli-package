@@ -33,14 +33,11 @@ class cli {
 	):void
 	{
 		// https://developer.wordpress.org/reference/functions/flush_rewrite_rules/
-		$defaults = [
-			'hard' => false,
-		];
-		$assoc_args = wp_parse_args(
-			args: $assoc_args,
-			defaults: $defaults,
+		$hard = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'hard',
+			default: false,
 		);
-		extract( $assoc_args );
 		flush_rewrite_rules( hard: $hard );
 		WP_CLI::success ( sprintf( 'The rewrite rules have been %1$s-flushed.',
 			$hard ? 'hard' : 'soft',
@@ -127,18 +124,19 @@ class cli {
 			'height',
 			'crop',
 		];
-        $defaults = [
-            'format' => 'table',
-			'fields' => implode(
+        $format = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'format',
+			default: 'table',
+		);
+        $fields = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'fields',
+			default: implode(
 				separator: ',',
 				array: $default_fields,
 			),
-		];
-        $assoc_args = wp_parse_args(
-            args: $assoc_args,
-            defaults: $defaults
-        );
-        extract( $assoc_args );
+		);
 		$requested_fields = explode(
 			separator: ',',
 			string: $fields,
@@ -208,16 +206,21 @@ class cli {
 		array $assoc_args = [],
 	):void
 	{
-		$defaults = [
-			'format' => 'table',
-			'include_builtins' => false,
-			'sort_by' => 'name', // post type label. corresponds to custom array in $post_types.
-		];
-		$assoc_args = wp_parse_args (
-			args: $assoc_args,
-			defaults: $defaults,
+		$format = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'format',
+			default: 'table',
 		);
-		extract( $assoc_args );
+		$include_builtins = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'include_builtins',
+			default: false,
+		);
+		$sort_by = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'sort_by',
+			default: 'name', // post type label. corresponds to custom array in $post_types.
+		);
 		$get_post_types_args = [];
 		if ( ! $include_builtins ) {
 			$get_post_types_args = [
@@ -410,14 +413,12 @@ class cli {
 		array $assoc_args = [],
 	):void
 	{
-		$defaults = [
-			'dry_run' => false,
-		];
-		$assoc_args = wp_parse_args(
-			args: $assoc_args,
-			defaults: $defaults,
+		$dry_run = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'dry_run',
+			default: false,
 		);
-		extract( $assoc_args );
+
 		$this->dry_run = $dry_run;
 		list ( $field, $value, $post_type ) = $args;
 
@@ -445,26 +446,30 @@ class cli {
 				$post_type,
 			));
 			$post_counter = 1;
-			foreach ($posts->posts as $post_id) {
-				WP_CLI::log(sprintf('Updating post ID %1$d (%2$d/%3$d)...',
+			foreach ( $posts->posts as $post_id ) {
+				WP_CLI::log( sprintf( 'Updating post ID %1$d (%2$d/%3$d)...',
 					$post_id,
 					$post_counter,
 					$post_count,
 				));
 				// update the post meta data.
 				if ( ! $this->dry_run ) {
-					update_post_meta( post_id: $post_id, meta_key: $field, meta_value: $value );
+					update_post_meta(
+						post_id: $post_id,
+						meta_key: $field,
+						meta_value: $value,
+					);
 				}
 				$post_counter++;
 			}
 			if ( ! $this->dry_run ) {
 				WP_CLI::success( sprintf( '%1$d posts were updated.',
 					$post_counter-1,
-				) );
+				));
 			} else {
 				WP_CLI::log( sprintf( '%1$d posts were not updated.',
 					$post_counter-1,
-				) );
+				));
 			}
 		} else {
 			// zero posts found.
@@ -485,7 +490,8 @@ class cli {
 	 * @subcommand toggle-debug
 	 * @alias toggle_debug
 	 */
-	public function toggle_debug():void {
+	public function toggle_debug():void
+	{
 		$constant = 'WP_DEBUG';
 		$command_options = [
 			'return' => true,  // capture and return output.
@@ -530,7 +536,8 @@ class cli {
 	 * @subcommand toggle-debug-display
 	 * @alias toggle_debug_display
 	 */
-	public function toggle_debug_display():void {
+	public function toggle_debug_display():void
+	{
 		$constant = 'WP_DEBUG_DISPLAY';
 		$command_options = [
 			'return' => true,  // capture and return output.
@@ -594,14 +601,11 @@ class cli {
 	):void
 	{
 		$ai1wm = 'ai1wm';
-		$defaults = [
-			'type' => 'quick',
-		];
-		$assoc_args = wp_parse_args (
-			args: $assoc_args,
-			defaults: $defaults,
+		$type = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'type',
+			default: 'quick',
 		);
-		extract( $assoc_args );
 		// mysql dump.
 		if ( $type == 'sql' ) {
 			$this->backup_database( file: sprintf('%1$s/%2$s-%3$s-export.sql',
