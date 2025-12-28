@@ -52,16 +52,30 @@ class cli {
 	 *
 	 * Displays the value of the WP_ENVIRONMENT_TYPE constant.
 	 *
+	 * [--porcelain]
+	 * : Print just the environment name.
+	 *
 	 * ## EXAMPLES
 	 *
 	 * wp bzmn print-wp-environment
+	 * wp bzmn print-wp-environment --porcelain
 	 *
 	 * @subcommand print-wp-environment
 	 * @alias print_wp_environment
 	 */
-	public function print_wp_environment():void
+	public function print_wp_environment(
+		array $args = [],
+		array $assoc_args = [],
+    ):void
 	{
-		WP_CLI::log( sprintf( 'environment: %1$s',
+		$porcelain = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'porcelain',
+			default: false,
+		);
+		$prefix = $porcelain ? '' : 'environment: ';
+		WP_CLI::log( sprintf( '%1$s%2$s',
+			$prefix,
 			wp_get_environment_type(),
 		));
 	}
@@ -101,7 +115,7 @@ class cli {
     public function print_image_sizes(
 		array $args = [],
 		array $assoc_args = [],
-    ): void
+    ):void
     {
 		$default_fields = [
 			'size',
