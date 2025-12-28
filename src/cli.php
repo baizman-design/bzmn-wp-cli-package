@@ -814,16 +814,16 @@ class cli {
 			]
 		);
 		$response_code = wp_remote_retrieve_response_code( response: $response );
-		$body = json_decode(
+		$response_body = json_decode(
 			json: wp_remote_retrieve_body( $response ),
 			associative: true,
 		);
 		$response_message = implode(
 			separator: ', ',
-			array: $body['messages'],
+			array: $response_body['messages'],
 		);
 		// "1" is success, "0" for failure.
-		$command_status = $body['status'];
+		$command_status = $response_body['status'];
 		// note: errors also return a 200 status code.
 		if ( $response_code == 200 && $command_status == '1' ) {
 			WP_CLI::success( $response_message );
