@@ -833,6 +833,78 @@ class cli {
 	}
 
 	/**
+	 * Clear the Cloudflare cache. Default: purge everything.
+	 *
+	 * API documentation: https://developers.cloudflare.com/api/resources/cache/
+	 *
+	 * ## OPTIONS
+	 *
+	 * <api_key>
+	 * : Cloudflare API key.
+	 *
+	 * <zone_id>
+	 * : Cloudflare zone ID.
+	 *
+	 * ## EXAMPLES
+	 *
+	 * wp bzmn clear-cloudflare-cache 12345 ABCDE
+	 *
+	 * @subcommand clear-cloudflare-cache
+	 * @alias clear_cloudflare_cache
+	 */
+	public function clear_cloudflare_cache(
+		$args,
+		$assoc_args
+	):void
+	{
+		list( $api_key, $zone_id, ) = $args;
+		$data = [
+			'purge_everything' => true,
+		];
+		$clear_cache_url = sprintf( 'https://api.cloudflare.com/client/v4/zones/%1$s/purge_cache',
+			$zone_id,
+		);
+		// the body must be JSON. see https://community.cloudflare.com/t/purge-everything-api-is-not-working/387799.
+		$body = json_encode(
+			value: $data,
+		);
+		$args = [
+			'timeout' => 10,
+			'body' => $body,
+			'headers' => [
+				'Authorization' => sprintf( 'Bearer %1$s',
+					$api_key,
+				),
+				'Content-Type' => 'application/json',
+			],
+		];
+		$response = wp_remote_post(
+			url: $clear_cache_url,
+			args: $args,
+		);
+		// the body returns a string containing JSON-encoded data.
+		$response_body = json_decode(
+			json: wp_remote_retrieve_body( $response ),
+			associative: true,
+		);
+		$command_status = $response_body['success'] ?? false;
+		if ( is_wp_error( thing: $response ) || wp_remote_retrieve_response_code( response: $response ) !== 200 || empty ( wp_remote_retrieve_body( response: $response ) ) || ! $command_status ) {
+			WP_CLI::error( message: 'Failed to clear the Cloudflare cache.' );
+			WP_CLI::debug( message: sprintf( 'Details: %1$s',
+				print_r(
+					value: $response,
+					return: true
+				),
+			));
+		}
+		if ( $command_status ) {
+			WP_CLI::success( message: 'The Cloudflare cache has been cleared.' );
+		} else {
+			WP_CLI::error( message: 'An unknown error occurred while trying to clear the Cloudflare cache.' );
+		}
+	}
+
+	/**
 	 * Create a MySQL dump of the database.
 	 *
 	 * @param string $file
