@@ -52,6 +52,8 @@ class cli {
 	 *
 	 * Displays the value of the WP_ENVIRONMENT_TYPE constant.
 	 *
+	 * ## OPTIONS
+	 *
 	 * [--porcelain]
 	 * : Print just the environment name.
 	 *
@@ -83,6 +85,8 @@ class cli {
     /**
      * Print the image sizes registered via add_image_size().
 	 *
+     * ## OPTIONS
+     *
      * [--fields=<fields>]
 	 * : Output specific fields. The default is all fields.
 	 * ---
@@ -520,7 +524,7 @@ class cli {
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp bzmn toggle-debug
+	 * wp bzmn toggle-debug-display
 	 *
 	 * @when before_wp_load
 	 * @subcommand toggle-debug-display
@@ -562,6 +566,8 @@ class cli {
 
 	/**
 	 * Back up a website using All-in-One WP Migration and Backup plugins.
+	 *
+	 * ## OPTIONS
 	 *
 	 * [--type=<type>]
 	 * : Type of backup. Options: quick, full, sql. Default: quick.
