@@ -493,36 +493,7 @@ class cli {
 	public function toggle_debug():void
 	{
 		$constant = 'WP_DEBUG';
-		$command_options = [
-			'return' => true,  // capture and return output.
-			'launch' => false, // reuse the current process.
-			'exit_error' => true, // halt script execution on error.
-		];
-		// get current setting.
-		$current_value = WP_CLI::runcommand(
-			command: sprintf( 'config get %1$s',
-				$constant,
-			),
-			options: $command_options,
-		);
-		// set to opposite of current setting.
-		$new_value_message = WP_CLI::runcommand(
-			command: sprintf( 'config set %1$s %2$s --raw',
-				$constant,
-				! ! $current_value ? 'false' : 'true',
-			),
-			options: $command_options,
-		);
-		if ( str_contains( haystack: $new_value_message, needle: 'Success:' ) ) {
-			WP_CLI::success( sprintf( '%1$s is set to %2$s.',
-				$constant,
-				! $current_value ? 'true' : 'false',
-			));
-		} else {
-			WP_CLI::error( sprintf( '%1$s could not be updated.',
-				$constant,
-			));
-		}
+		$this->set_config_file_value( constant: $constant );
 	}
 
 	/**
@@ -539,36 +510,7 @@ class cli {
 	public function toggle_debug_display():void
 	{
 		$constant = 'WP_DEBUG_DISPLAY';
-		$command_options = [
-			'return' => true,  // capture and return output.
-			'launch' => false, // reuse the current process.
-			'exit_error' => true, // halt script execution on error.
-		];
-		// get current setting.
-		$current_value = WP_CLI::runcommand(
-			command: sprintf( 'config get %1$s',
-				$constant,
-			),
-			options: $command_options,
-		);
-		// set to opposite of current setting.
-		$new_value_message = WP_CLI::runcommand(
-			command: sprintf( 'config set %1$s %2$s --raw',
-				$constant,
-				! ! $current_value ? 'false' : 'true',
-			),
-			options: $command_options,
-		);
-		if ( str_contains( haystack: $new_value_message, needle: 'Success:' ) ) {
-			WP_CLI::success( sprintf( '%1$s is set to %2$s.',
-				$constant,
-				! $current_value ? 'true' : 'false',
-			));
-		} else {
-			WP_CLI::error( sprintf( '%1$s could not be updated.',
-				$constant,
-			));
-		}
+		$this->set_config_file_value( constant: $constant );
 	}
 
 	/**
@@ -884,7 +826,7 @@ class cli {
 		);
 		// the body returns a string containing JSON-encoded data.
 		$response_body = json_decode(
-			json: wp_remote_retrieve_body( $response ),
+			json: wp_remote_retrieve_body( response: $response ),
 			associative: true,
 		);
 		$command_status = $response_body['success'] ?? false;
@@ -975,6 +917,51 @@ class cli {
 			$return_code,
 		));
 		return ! ( $return_code == '1' );
+	}
+
+	/**
+	 * Set constant value in wp-config.php.
+	 *
+	 * @param string $constant
+	 *
+	 * @return void
+	 * @throws ExitException
+	 */
+	private function set_config_file_value(
+		string $constant,
+	):void
+	{
+		// options for WP_CLI::runcommand().
+		$runcommand_options = [
+			'return'     => true,  // capture and return output.
+			'launch'     => false, // reuse the current process.
+			'exit_error' => true, // halt script execution on error.
+		];
+		// get current setting.
+		$current_value = WP_CLI::runcommand(
+			command: sprintf( 'config get %1$s',
+				$constant,
+			),
+			options: $runcommand_options,
+		);
+		// set to opposite of current setting.
+		$new_value_message = WP_CLI::runcommand(
+			command: sprintf( 'config set %1$s %2$s --raw',
+				$constant,
+				! ! $current_value ? 'false' : 'true',
+			),
+			options: $runcommand_options,
+		);
+		if ( str_contains( haystack: $new_value_message, needle: 'Success:' ) ) {
+			WP_CLI::success( sprintf( '%1$s is set to %2$s.',
+				$constant,
+				! $current_value ? 'true' : 'false',
+			));
+		} else {
+			WP_CLI::error( sprintf( '%1$s could not be updated.',
+				$constant,
+			));
+		}
 	}
 
 	/**
