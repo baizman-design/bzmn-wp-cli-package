@@ -48,6 +48,13 @@
             "bzmn set-toolset-post-type-pagination",
             "bzmn toggle-debug",
             "bzmn toggle-debug-display"
-       ]
+       ],
+       "readme": {
+           "sections": [
+                "Using",
+                "Installing"
+           ],
+           "show_powered_by": false
+       }
    }
 }
