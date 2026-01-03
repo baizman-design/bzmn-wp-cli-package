@@ -561,12 +561,48 @@ class cli {
 			// we're done here.
 			WP_CLI::halt( return_code: 0 );
 		}
-		$wp_path = WP_CLI::get_config( key: 'path' ) ?? '.';
 		// plugins to activate / deactivate.
-		$ai1wm_plugins = [
-			'all-in-one-wp-migration',
-			'all-in-one-wp-migration-multisite-extension',
+		$ai1wm_plugin_slugs = [
+			'all-in-one-wp-migration/all-in-one-wp-migration.php',
+			'all-in-one-wp-migration-multisite-extension/all-in-one-wp-migration-multisite-extension.php',
 		];
+		$ai1wm_plugins = array_map (
+			fn ( $plugin_slug ) => dirname( $plugin_slug ),
+			$ai1wm_plugin_slugs,
+		);
+		$all_plugins = get_plugins();
+		// the array below should be empty if the required plugins are present, even if inactive.
+		$plugin_presence_check = array_diff(
+			$ai1wm_plugins,
+			array_map(
+				// strip off filename from key ("directory/filename.php").
+				fn ( $plugin_slug ) => dirname( $plugin_slug ),
+				array_keys( $all_plugins ),
+			),
+		);
+		if ( $plugin_presence_check ) {
+			WP_CLI::error( sprintf( 'the %1$s %2$s %3$s not installed.',
+				implode( separator: ' and ', array: $plugin_presence_check ),
+				WP_CLI\Utils\pluralize( noun: 'plugin', count: count( $plugin_presence_check ),), // conditional plural
+				count( $plugin_presence_check ) == 1 ? 'is': 'are', // verb
+			));
+		}
+		// determine whether the plugins need to be activated.
+		$plugins_need_to_be_activated = false;
+		foreach ( $ai1wm_plugin_slugs as $plugin ) {
+			WP_CLI::debug( sprintf( '%1$s is active: %2$s',
+				$plugin,
+				is_plugin_active( $plugin ) ? 'true' : 'false',
+			));
+			if ( ! is_plugin_active( $plugin ) ) {
+				$plugins_need_to_be_activated = true;
+				break;
+			}
+		}
+		WP_CLI::debug( sprintf( '$plugins_need_to_be_activated: %1$s',
+			$plugins_need_to_be_activated ? 'true' : 'false',
+		));
+		$wp_path = WP_CLI::get_config( key: 'path' ) ?? '.';
 		// arguments for quick backup, sans "--".
 		$quick_backup_args = [
 			'exclude-spam-comments',
@@ -594,27 +630,11 @@ class cli {
 		];
 		// is this a multisite installation? if so, add flag for activate / deactivate commands.
 		$network_flag = is_multisite() ? '--network' : '';
-		$has_command_return_options = wp_parse_args (
-			args: [
-				'return' => 'return_code', // only return status code (0 for yes or 1 for no).
-				'exit_error' => false, // don't exit on error.
-			],
-			defaults: $runcommand_option_defaults,
-		);
-		$has_ai1wm_command = $this->has_command(
-			command_name: $ai1wm,
-			runcommand_options: $has_command_return_options,
-		);
-		WP_CLI::debug( sprintf( '$has_ai1wm_command: %1$s',
-			$has_ai1wm_command ? 'true' : 'false',
-		));
 		// if the command was not present, activate the necessary plugins.
-		if ( ! $has_ai1wm_command ) {
+		if ( $plugins_need_to_be_activated ) {
 			WP_CLI::log( sprintf( 'Activating plugins %1$s...',
 				implode( separator: ' ', array: $ai1wm_plugins ),
 			));
-			// TODO: check return status of this command.
-			// if it fails, error() out.
 			$plugin_activate_options = wp_parse_args (
 				args: [
 					'return' => 'all', // only return status code (0 for yes or 1 for no).
@@ -634,9 +654,10 @@ class cli {
 				WP_CLI::log( $plugin_activate_message->stderr );
 				WP_CLI::halt( return_code: 1 );
 			}
+			// TODO: remove has_command() method, which is used only once, and refactor below.
 			$has_command_return_options['launch'] = true;
 			$has_ai1wm_command = $this->has_command(
-				command_name:$ai1wm,
+				command_name: $ai1wm,
 				runcommand_options: $has_command_return_options,
 			);
 			WP_CLI::debug( sprintf( '$has_ai1wm_command: %1$s',
@@ -654,7 +675,7 @@ class cli {
 				$plugin_activate_message->stdout,
 			));
 		} else {
-			WP_CLI::log( sprintf( 'Plugins %1$s are already activated. Continuing...',
+			WP_CLI::log( sprintf( 'Plugins %1$s are already activate. Continuing...',
 				implode( separator: ' and ', array: $ai1wm_plugins ),
 			));
 		}
@@ -684,20 +705,24 @@ class cli {
 		WP_CLI::log( sprintf( '%1$s',
 			$return_message,
 		));
-		WP_CLI::log( sprintf( 'Deactivating plugins %1$s...',
-			implode( separator: ' ', array: $ai1wm_plugins ),
-		));
-		// always deactivate the plugins. (but maybe not if they were already active?)
-		$return_message = WP_CLI::runcommand(
-			command: sprintf( 'plugin deactivate %1$s %2$s',
+		// don't deactivate the plugins if they were already active.
+		if ( $plugins_need_to_be_activated ) {
+			WP_CLI::log( sprintf( 'Deactivating plugins %1$s...',
 				implode( separator: ' ', array: $ai1wm_plugins ),
-				$network_flag,
-			),
-			options: $runcommand_option_defaults,
-		);
-		WP_CLI::log( sprintf( '%1$s',
-			$return_message,
-		));
+			));
+			$return_message = WP_CLI::runcommand(
+				command: sprintf( 'plugin deactivate %1$s %2$s',
+					implode( separator: ' ', array: $ai1wm_plugins ),
+					$network_flag,
+				),
+				options: $runcommand_option_defaults,
+			);
+			WP_CLI::log( sprintf( '%1$s',
+				$return_message,
+			));
+		} else {
+			WP_CLI::warning( 'The plugins were already active and have not been deactivated.' );
+		}
 		WP_CLI::success( sprintf( '%1$s backup succeeded.',
 			ucfirst( $type ),
 		));
@@ -962,22 +987,6 @@ class cli {
 				$constant,
 			));
 		}
-	}
-
-	/**
-	 * Pluralize a word, if needed.
-	 *
-	 * @param array $count
-	 * @param string $plural_suffix
-	 *
-	 * @return string
-	 */
-	private function pluralize (
-		array $count,
-		string $plural_suffix = 's',
-	):string
-	{
-		return count( $count ) > 1 ? $plural_suffix : '';
 	}
 
 }
