@@ -1,5 +1,13 @@
+# a new command has to be added to composer.json for it to be included in doc.md.
+
 name: regenerate doc.md
 on:
+  push:
+    branches:
+      - production
+    paths:
+      - composer.json
+      - src/cli.php
   # run this workflow manually
   workflow_dispatch:
 
