@@ -1,0 +1,58 @@
+name: regenerate doc.md
+on:
+  # run this workflow manually
+  workflow_dispatch:
+
+env:
+  DOC: doc.md
+  WP_CLI_PACKAGES_DIR: /root/.wp-cli/packages
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate-readme:
+    name: Regenerate doc.md and commit it back to the repository
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/baizman-design/wp-cli-package
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.BD_ACCESS_TOKEN }}
+    steps:
+      - name: check out the repository
+        uses: actions/checkout@v4
+        with:
+          path: bzmn-wp-cli-package
+      - name: install the command
+        run: cd /root/.wp-cli/packages && composer config repositories.baizman-design path ${GITHUB_WORKSPACE}/bzmn-wp-cli-package && composer require "baizman-design/bzmn-wp-cli-package @dev"
+      - name: check for the presence of the command
+        run: wp package list
+      - name: backup the README
+        run: cp -v ${GITHUB_WORKSPACE}/bzmn-wp-cli-package/README.md ${GITHUB_WORKSPACE}/bzmn-wp-cli-package/README.md.bak
+      - name: regenerate the documentation
+        run: cd ${GITHUB_WORKSPACE}/bzmn-wp-cli-package && wp scaffold package-readme --branch=${{ github.event.repository.default_branch }} --force .
+      - name: rename files
+        run: mv -v ${GITHUB_WORKSPACE}/bzmn-wp-cli-package/README.md ${GITHUB_WORKSPACE}/bzmn-wp-cli-package/${DOC} && mv -v ${GITHUB_WORKSPACE}/bzmn-wp-cli-package/README.md.bak ${GITHUB_WORKSPACE}/bzmn-wp-cli-package/README.md
+      - name: commit documentation, if needed
+        run: >
+          cd ${GITHUB_WORKSPACE}/bzmn-wp-cli-package;
+          git config --global --add safe.directory '*';
+          git config --global user.name 'Saul Baizman';
+          git config --global user.email 'baizman-design@users.noreply.github.com';
+          set +e;
+          git diff --quiet --exit-code;
+          if [ $? -eq 1 ];
+          then
+          set -e;
+          added="$(git diff --numstat ${DOC} | awk '{print $1}')";
+          echo "lines added: ${added:-0}" | tee -a ${GITHUB_STEP_SUMMARY};
+          deleted="$(git diff --numstat ${DOC} | awk '{print $2}')";
+          echo "lines deleted: ${deleted:-0}" | tee -a ${GITHUB_STEP_SUMMARY};
+          git add ${DOC};
+          git commit -m "Updated ${DOC} via GHA.";
+          git push;
+          echo "changes were successfully committed to the repository." | tee -a ${GITHUB_STEP_SUMMARY};
+          else
+          echo "it appears nothing changed." | tee -a ${GITHUB_STEP_SUMMARY};
+          fi
