@@ -4,26 +4,24 @@ A WP CLI package with commands for multiple clients.
 
 ## installation
 
-Modify the repositories in `~/.wp-cli/packages/composer.json`:
-
-```json
-    "repositories": [
-    {
-        "type": "composer",
-        "url": "https://wp-cli.org/package-index/"
-    },
-    {
-        "type": "path",
-        "url": "/Users/saul/Documents/bzmn-wp-cli-package"
-    }
-],
-```
-
-Then run the commands below:
+### remote (via github)
 
 ```shell
+wp package browse
 cd ~/.wp-cli/packages
+composer config repositories.baizman-design vcs https://github.com/baizman-design/bzmn-wp-cli-package
 composer require "baizman-design/bzmn-wp-cli-package @dev"
+wp package list
+```
+
+### local (via directory)
+
+```shell
+wp package browse
+cd ~/.wp-cli/packages
+composer config repositories.baizman-design path /Users/saul/Documents/bzmn-wp-cli-package
+composer require "baizman-design/bzmn-wp-cli-package @dev"
+wp package list
 ```
 
 ## upgrading
