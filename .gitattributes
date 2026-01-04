@@ -1,0 +1,24 @@
+# this file
+.gitattributes export-ignore
+
+# github
+.github export-ignore
+
+# docker
+Dockerfile export-ignore
+
+# phpunit
+phpunit.xml export-ignore
+phpunit.xml.dist export-ignore
+
+# phpunit testing directory
+tests export-ignore
+
+# ignored files
+.gitignore export-ignore
+
+# readme
+*.md export-ignore
+
+# phpcs configuration
+.phpcs.xml.dist export-ignore
