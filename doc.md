@@ -5,7 +5,7 @@ A WP CLI package with commands for multiple clients.
 
 
 
-Quick links: [Using](#using) | [Installing](#installing)
+Quick links: [Using](#using)
 
 ## Using
 
@@ -304,21 +304,5 @@ wp bzmn toggle-debug-display
 **EXAMPLES**
 
 wp bzmn toggle-debug-display
-
-## Installing
-
-Installing this package requires WP-CLI v1.3.0 or greater. Update to the latest stable release with `wp cli update`.
-
-Once you've done so, you can install the latest stable version of this package with:
-
-```bash
-wp package install baizman-design/bzmn-wp-cli-package:@stable
-```
-
-To install the latest development version of this package, use the following command instead:
-
-```bash
-wp package install baizman-design/bzmn-wp-cli-package:dev-production
-```
 
 
