@@ -32,10 +32,17 @@ wp bzmn backup [--type=<type>]
 
 **EXAMPLES**
 
-wp bzmn backup
-wp bzmn backup --type=quick
-wp bzmn backup --type=full
-wp bzmn backup --type=sql
+    # Make a default (quick) backup.
+    wp bzmn backup
+
+    # Make a quick backup.
+    wp bzmn backup --type=quick
+
+    # Make a full (file and database) backup.
+    wp bzmn backup --type=full
+
+    # Make a database backup.
+    wp bzmn backup --type=sql
 
 
 
@@ -59,7 +66,9 @@ API documentation: https://developers.cloudflare.com/api/resources/cache/
 
 **EXAMPLES**
 
-wp bzmn clear-cloudflare-cache 12345 ABCDE
+    # Clear the cloudflare cache for a domain.
+    wp bzmn clear-cloudflare-cache 12345 ABCDE
+    Success: The Cloudflare cache has been cleared.
 
 
 
@@ -84,8 +93,11 @@ wp bzmn clear-sucuri-cache <api_key> <api_secret> [<filename>]
 
 **EXAMPLES**
 
-wp bzmn clear-sucuri-cache 12345 ABCDE
-wp bzmn clear-sucuri-cache 12345 ABCDE index.php
+    # Clear the Sucuri cache for a domain.
+    wp bzmn clear-sucuri-cache 12345 ABCDE
+
+    # Clear the Sucuri cache for the file index.php.
+    wp bzmn clear-sucuri-cache 12345 ABCDE index.php
 
 
 
@@ -99,13 +111,15 @@ wp bzmn delete-wc-transients
 
 **EXAMPLES**
 
-wp bzmn delete-wc-transients
+    # Delete the WooCommerce transients.
+    wp bzmn delete-wc-transients
+    Success: Deleted WooCommerce payment field style transients.
 
 
 
 ### wp bzmn flush-rewrite-rules
 
-Flush rewrite rules.
+Flush URL rewrite rules.
 
 ~~~
 wp bzmn flush-rewrite-rules [--hard]
@@ -118,8 +132,13 @@ wp bzmn flush-rewrite-rules [--hard]
 
 **EXAMPLES**
 
-wp bzmn flush-rewrite-rules
-wp bzmn flush-rewrite-rules --hard
+    # Soft-flush the rewrite rules.
+    $ wp bzmn flush-rewrite-rules
+    Success: The rewrite rules have been soft-flushed.
+
+    # Hard-flush the rewrite rules.
+    $ wp bzmn flush-rewrite-rules --hard
+    Success: The rewrite rules have been hard-flushed.
 
 
 
@@ -149,8 +168,11 @@ If the field is not present, the field and value will be added.
 
 **EXAMPLES**
 
-wp bzmn populate-post-meta wpcf-hide-page-in-navigation 0 page
-wp bzmn populate-post-meta wpcf-hide-page-in-navigation 0 page --dry_run
+    # Set the value of "wpcf-hide-page-in-navigation" to "0" for all pages.
+    wp bzmn populate-post-meta wpcf-hide-page-in-navigation 0 page
+
+    # Set the value of "wpcf-hide-page-in-navigation" to "0" for all pages in a test run.
+    wp bzmn populate-post-meta wpcf-hide-page-in-navigation 0 page --dry_run
 
 
 
@@ -187,10 +209,17 @@ wp bzmn print-custom-post-types [--format=<format>] [--sort_by=<field>] [--inclu
 
 **EXAMPLES**
 
-wp bzmn print-custom-post-types
-wp bzmn print-custom-post-types --sort_by=slug
-wp bzmn print-custom-post-types --include_builtins
-wp bzmn print-custom-post-types --include_builtins --sort_by=slug
+    # Print the custom post types sorted alphabetically by name.
+    wp bzmn print-custom-post-types
+
+    # Print the custom post types sorted alphabetically by slug.
+    wp bzmn print-custom-post-types --sort_by=slug
+
+    # Print the custom and built-in post types.
+    wp bzmn print-custom-post-types --include_builtins
+
+    # Print the custom and built-in post types sorted alphabetically by slug.
+    wp bzmn print-custom-post-types --include_builtins --sort_by=slug
 
 
 
@@ -225,10 +254,17 @@ wp bzmn print-image-sizes [--fields=<fields>] [--format=<format>]
 
 **EXAMPLES**
 
-wp bzmn print-image-sizes
-wp bzmn print-image-sizes --format=table
-wp bzmn print-image-sizes --fields=size,crop
-wp bzmn print-image-sizes --fields=size,crop --format=csv
+    # Print the image sizes in a table.
+    wp bzmn print-image-sizes
+
+    # Print the image sizes in as json.
+    wp bzmn print-image-sizes --format=json
+
+    # Print the image sizes with only the size and crop columns.
+    wp bzmn print-image-sizes --fields=size,crop
+
+    # Print the image sizes with only the size and crop columns in csv format.
+    wp bzmn print-image-sizes --fields=size,crop --format=csv
 
 
 
@@ -249,8 +285,13 @@ Displays the value of the WP_ENVIRONMENT_TYPE constant.
 
 **EXAMPLES**
 
-wp bzmn print-wp-environment
-wp bzmn print-wp-environment --porcelain
+    # Print the environment type with a prefix.
+    $ wp bzmn print-wp-environment
+    environment: production
+
+    # Print the environment type without a prefix.
+    $ wp bzmn print-wp-environment --porcelain
+    production
 
 
 
@@ -275,7 +316,9 @@ https://toolset.com/errata/pagination-screen-option-on-post-type-listing-page-do
 
 **EXAMPLES**
 
-wp bzmn set-toolset-post-type-pagination user@domain.com 25
+    # Set the pagination for user@domain.com to 25 items per page.
+    wp bzmn set-toolset-post-type-pagination user@domain.com 25
+    Success: The pagination for "user@domain.com" was set to "25."
 
 
 
@@ -289,7 +332,13 @@ wp bzmn toggle-debug
 
 **EXAMPLES**
 
-wp bzmn toggle-debug
+    # Toggle the WP_DEBUG constant value.
+    wp bzmn toggle-debug
+    Success: WP_DEBUG is set to true.
+
+    # Toggle the WP_DEBUG constant value.
+    wp bzmn toggle-debug
+    Success: WP_DEBUG is set to false.
 
 
 
@@ -303,6 +352,12 @@ wp bzmn toggle-debug-display
 
 **EXAMPLES**
 
-wp bzmn toggle-debug-display
+    # Toggle the WP_DEBUG_DISPLAY constant value.
+    wp bzmn toggle-debug-display
+    Success: WP_DEBUG_DISPLAY is set to true.
+
+    # Toggle the WP_DEBUG_DISPLAY constant value.
+    wp bzmn toggle-debug-display
+    Success: WP_DEBUG_DISPLAY is set to false.
 
 
