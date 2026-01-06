@@ -550,8 +550,6 @@ class cli {
 		);
 		// mysql dump.
 		if ( $type == 'sql' ) {
-			// set timezone, otherwise it's UTC.
-			date_default_timezone_set('America/New_York');
 			$this->backup_database( file: sprintf('%1$s/%2$s-%3$s-export.sql',
 				untrailingslashit( ABSPATH ),
 				DB_NAME,
