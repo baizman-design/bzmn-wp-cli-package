@@ -12,7 +12,7 @@ class cli {
 	private bool $dry_run = false;
 
 	/**
-	 * Flush rewrite rules.
+	 * Flush URL rewrite rules.
 	 *
 	 * ## OPTIONS
 	 *
@@ -21,8 +21,13 @@ class cli {
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp bzmn flush-rewrite-rules
-	 * wp bzmn flush-rewrite-rules --hard
+	 *     # Soft-flush the rewrite rules.
+	 *     $ wp bzmn flush-rewrite-rules
+	 *     Success: The rewrite rules have been soft-flushed.
+	 *
+	 *     # Hard-flush the rewrite rules.
+	 *     $ wp bzmn flush-rewrite-rules --hard
+	 *     Success: The rewrite rules have been hard-flushed.
 	 *
 	 * @subcommand flush-rewrite-rules
 	 * @alias flush_rewrite_rules
@@ -56,8 +61,13 @@ class cli {
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp bzmn print-wp-environment
-	 * wp bzmn print-wp-environment --porcelain
+	 *     # Print the environment type with a prefix.
+	 *     $ wp bzmn print-wp-environment
+	 *     environment: production
+	 *
+	 *     # Print the environment type without a prefix.
+	 *     $ wp bzmn print-wp-environment --porcelain
+	 *     production
 	 *
 	 * @subcommand print-wp-environment
 	 * @alias print_wp_environment
@@ -105,10 +115,17 @@ class cli {
      *
      * ## EXAMPLES
      *
-     * wp bzmn print-image-sizes
-     * wp bzmn print-image-sizes --format=table
-     * wp bzmn print-image-sizes --fields=size,crop
-     * wp bzmn print-image-sizes --fields=size,crop --format=csv
+     *     # Print the image sizes in a table.
+     *     wp bzmn print-image-sizes
+     *
+     *     # Print the image sizes in as json.
+     *     wp bzmn print-image-sizes --format=json
+     *
+     *     # Print the image sizes with only the size and crop columns.
+     *     wp bzmn print-image-sizes --fields=size,crop
+     *
+     *     # Print the image sizes with only the size and crop columns in csv format.
+     *     wp bzmn print-image-sizes --fields=size,crop --format=csv
      *
      * @subcommand print-image-sizes
      * @alias print_image_sizes
@@ -193,10 +210,17 @@ class cli {
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp bzmn print-custom-post-types
-	 * wp bzmn print-custom-post-types --sort_by=slug
-	 * wp bzmn print-custom-post-types --include_builtins
-	 * wp bzmn print-custom-post-types --include_builtins --sort_by=slug
+	 *     # Print the custom post types sorted alphabetically by name.
+	 *     wp bzmn print-custom-post-types
+	 *
+	 *     # Print the custom post types sorted alphabetically by slug.
+	 *     wp bzmn print-custom-post-types --sort_by=slug
+	 *
+	 *     # Print the custom and built-in post types.
+	 *     wp bzmn print-custom-post-types --include_builtins
+	 *
+	 *     # Print the custom and built-in post types sorted alphabetically by slug.
+	 *     wp bzmn print-custom-post-types --include_builtins --sort_by=slug
 	 *
 	 * @subcommand print-custom-post-types
 	 * @alias print_custom_post_types
@@ -280,7 +304,9 @@ class cli {
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp bzmn set-toolset-post-type-pagination user@domain.com 25
+	 *     # Set the pagination for user@domain.com to 25 items per page.
+	 *     wp bzmn set-toolset-post-type-pagination user@domain.com 25
+	 *     Success: The pagination for "user@domain.com" was set to "25."
 	 *
 	 * @subcommand set-toolset-post-type-pagination
 	 * @alias set_toolset_post_type_pagination
@@ -343,7 +369,9 @@ class cli {
      *
      * ## EXAMPLES
      *
-     * wp bzmn delete-wc-transients
+     *     # Delete the WooCommerce transients.
+     *     wp bzmn delete-wc-transients
+     *     Success: Deleted WooCommerce payment field style transients.
      *
      * @subcommand delete-wc-transients
      * @alias delete_wc_transients
@@ -402,8 +430,11 @@ class cli {
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp bzmn populate-post-meta wpcf-hide-page-in-navigation 0 page
-	 * wp bzmn populate-post-meta wpcf-hide-page-in-navigation 0 page --dry_run
+	 *     # Set the value of "wpcf-hide-page-in-navigation" to "0" for all pages.
+	 *     wp bzmn populate-post-meta wpcf-hide-page-in-navigation 0 page
+	 *
+	 *     # Set the value of "wpcf-hide-page-in-navigation" to "0" for all pages in a test run.
+	 *     wp bzmn populate-post-meta wpcf-hide-page-in-navigation 0 page --dry_run
 	 *
 	 * @subcommand populate-post-meta
 	 * @alias populate_post_meta
@@ -484,7 +515,13 @@ class cli {
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp bzmn toggle-debug
+	 *     # Toggle the WP_DEBUG constant value.
+	 *     wp bzmn toggle-debug
+	 *     Success: WP_DEBUG is set to true.
+	 *
+	 *     # Toggle the WP_DEBUG constant value.
+	 *     wp bzmn toggle-debug
+	 *     Success: WP_DEBUG is set to false.
 	 *
 	 * @when before_wp_load
 	 * @subcommand toggle-debug
@@ -501,7 +538,13 @@ class cli {
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp bzmn toggle-debug-display
+	 *     # Toggle the WP_DEBUG_DISPLAY constant value.
+	 *     wp bzmn toggle-debug-display
+	 *     Success: WP_DEBUG_DISPLAY is set to true.
+	 *
+	 *     # Toggle the WP_DEBUG_DISPLAY constant value.
+	 *     wp bzmn toggle-debug-display
+	 *     Success: WP_DEBUG_DISPLAY is set to false.
 	 *
 	 * @when before_wp_load
 	 * @subcommand toggle-debug-display
@@ -529,10 +572,17 @@ class cli {
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp bzmn backup
-	 * wp bzmn backup --type=quick
-	 * wp bzmn backup --type=full
-	 * wp bzmn backup --type=sql
+	 *     # Make a default (quick) backup.
+	 *     wp bzmn backup
+	 *
+	 *     # Make a quick backup.
+	 *     wp bzmn backup --type=quick
+	 *
+	 *     # Make a full (file and database) backup.
+	 *     wp bzmn backup --type=full
+	 *
+	 *     # Make a database backup.
+	 *     wp bzmn backup --type=sql
 	 *
      * @subcommand backup
      * @alias bu
@@ -805,8 +855,11 @@ class cli {
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp bzmn clear-sucuri-cache 12345 ABCDE
-	 * wp bzmn clear-sucuri-cache 12345 ABCDE index.php
+	 *     # Clear the Sucuri cache for a domain.
+	 *     wp bzmn clear-sucuri-cache 12345 ABCDE
+	 *
+	 *     # Clear the Sucuri cache for the file index.php.
+	 *     wp bzmn clear-sucuri-cache 12345 ABCDE index.php
 	 *
 	 * @subcommand clear-sucuri-cache
 	 * @alias clear_sucuri_cache
@@ -875,7 +928,9 @@ class cli {
 	 *
 	 * ## EXAMPLES
 	 *
-	 * wp bzmn clear-cloudflare-cache 12345 ABCDE
+	 *     # Clear the cloudflare cache for a domain.
+	 *     wp bzmn clear-cloudflare-cache 12345 ABCDE
+	 *     Success: The Cloudflare cache has been cleared.
 	 *
 	 * @subcommand clear-cloudflare-cache
 	 * @alias clear_cloudflare_cache
