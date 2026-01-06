@@ -1,6 +1,6 @@
 # bzmn wp cli package
 
-A WP CLI package with commands for multiple clients.
+A WP CLI package with commands for multiple clients. See [`doc.md`](doc.md) for command documentation.
 
 ## installation
 
