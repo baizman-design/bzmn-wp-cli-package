@@ -20,5 +20,8 @@ tests export-ignore
 # readme
 README.md export-ignore
 
+# license
+LICENSE.md export-ignore
+
 # phpcs configuration
 .phpcs.xml.dist export-ignore
