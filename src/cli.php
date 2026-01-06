@@ -732,7 +732,13 @@ class cli {
 				WP_CLI::halt( return_code: 1 );
 			}
 			// TODO (maybe): remove has_command() method, which is used only once, and refactor below.
-			$has_command_return_options['launch'] = true;
+			$has_command_return_options = wp_parse_args (
+				args: [
+					'launch' => true,
+					'exit_error' => false, // don't exit on error.
+				],
+				defaults: $runcommand_option_defaults,
+			);
 			$has_ai1wm_command = $this->has_command(
 				command_name: $ai1wm_command,
 				runcommand_options: $has_command_return_options,
