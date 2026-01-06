@@ -586,15 +586,18 @@ class cli {
 		if ( $plugin_presence_check ) {
 			WP_CLI::error(
 				message: sprintf( 'the %1$s %2$s %3$s not installed.',
+					// list of plugins, separated by " and ".
 					implode(
 						separator: ' and ',
 						array: $plugin_presence_check,
-					), // list of plugins, separated by " and "
+					),
+					// conditional plural.
 					WP_CLI\Utils\pluralize(
 						noun: 'plugin',
 						count: count( $plugin_presence_check ),
-					), // conditional plural
-					count( $plugin_presence_check ) == 1 ? 'is': 'are', // single or plural verb
+					),
+					// single or plural verb.
+					count( $plugin_presence_check ) == 1 ? 'is': 'are',
 				)
 			);
 		}
