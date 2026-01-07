@@ -31,18 +31,14 @@ jobs:
     steps:
       - name: check out the repository
         uses: actions/checkout@v4
-      - name: install the custom command
-        run: wp package install ${GITHUB_WORKSPACE}
-      - name: verify the presence of the custom command
-        run: wp package list
-      - name: backup README.md
-        run: cp -v ${README} ${README}.bak
-      - name: regenerate the documentation
-        run: wp scaffold package-readme --branch=${{ github.event.repository.default_branch }} --force .
-      - name: rename README.md
-        run: mv -v ${README} ${DOC}
-      - name: restore original README.md
-        run: mv -v ${README}.bak ${README}
+      - name: install the custom command and generate the markdown documentation
+        run: >
+          wp package install ${GITHUB_WORKSPACE};
+          wp package list;
+          mv -v ${README} ${README}.bak;
+          wp scaffold package-readme --branch=${{ github.event.repository.default_branch }} --force .;
+          mv -v ${README} ${DOC};
+          mv -v ${README}.bak ${README}
       - name: commit documentation, if needed
         run: >
           git config --global --add safe.directory '*';
