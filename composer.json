@@ -3,6 +3,7 @@
     "description": "A WP CLI package with commands for multiple clients.",
     "type": "wp-cli-package",
     "homepage": "https://github.com/baizman-design/bzmn-wp-cli-package",
+    "license": "MIT",
     "authors": [
         {
             "name": "Saul Baizman",
@@ -32,7 +33,7 @@
         }
     },
     "support": {
-        "issues": "https://github.com/baizman-design/bzmn-wp-cli-package/issues/new"
+        "issues": "https://github.com/baizman-design/bzmn-wp-cli-package/issues"
     },
     "extra": {
        "commands": [
