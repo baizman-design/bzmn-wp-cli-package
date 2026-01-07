@@ -32,7 +32,7 @@ jobs:
       - name: check out the repository
         uses: actions/checkout@v4
       - name: install the custom command
-        run:  composer -d ${WP_CLI_PACKAGES_DIR} config repositories.baizman-design path ${GITHUB_WORKSPACE} && composer -d ${WP_CLI_PACKAGES_DIR} require "baizman-design/bzmn-wp-cli-package @dev"
+        run: wp package install ${GITHUB_WORKSPACE}
       - name: verify the presence of the custom command
         run: wp package list
       - name: backup README.md
