@@ -11,6 +11,15 @@ class cli {
 	// flag to set whether the changes are made.
 	private bool $dry_run = false;
 
+	// WP CLI command name for backup and restore commands.
+	private string $ai1wm_command = 'ai1wm';
+
+	// plugins to activate / deactivate.
+	private array $ai1wm_plugin_slugs = [
+		'all-in-one-wp-migration/all-in-one-wp-migration.php',
+		'all-in-one-wp-migration-multisite-extension/all-in-one-wp-migration-multisite-extension.php',
+	];
+
 	/**
 	 * Flush URL rewrite rules.
 	 *
@@ -592,7 +601,6 @@ class cli {
 		array $assoc_args = [],
 	):void
 	{
-		$ai1wm_command = 'ai1wm';
 		$type = WP_CLI\Utils\get_flag_value(
 			assoc_args: $assoc_args,
 			flag: 'type',
@@ -613,47 +621,11 @@ class cli {
 			// we're done here.
 			WP_CLI::halt( return_code: 0 );
 		}
-		// plugins to activate / deactivate.
-		$ai1wm_plugin_slugs = [
-			'all-in-one-wp-migration/all-in-one-wp-migration.php',
-			'all-in-one-wp-migration-multisite-extension/all-in-one-wp-migration-multisite-extension.php',
-		];
-		$ai1wm_plugins = array_map (
-			// strip off filename from key ("directory/filename.php").
-			fn ( $plugin_slug ) => dirname( $plugin_slug ),
-			$ai1wm_plugin_slugs,
-		);
-		$all_plugins = get_plugins();
-		// the array below should be empty if the required plugins are present, even if inactive.
-		$plugin_presence_check = array_diff(
-			$ai1wm_plugins,
-			array_map(
-				// strip off filename from key ("directory/filename.php").
-				fn ( $plugin_slug ) => dirname( $plugin_slug ),
-				array_keys( $all_plugins ),
-			),
-		);
-		if ( $plugin_presence_check ) {
-			WP_CLI::error(
-				message: sprintf( 'the %1$s %2$s %3$s not installed.',
-					// list of plugins, separated by " and ".
-					implode(
-						separator: ' and ',
-						array: $plugin_presence_check,
-					),
-					// conditional plural.
-					WP_CLI\Utils\pluralize(
-						noun: 'plugin',
-						count: count( $plugin_presence_check ),
-					),
-					// single or plural verb.
-					count( $plugin_presence_check ) == 1 ? 'is': 'are',
-				)
-			);
-		}
+		$ai1wm_plugins = $this->get_plugin_dirs();
+		$this->plugin_presence_check();
 		// determine whether the plugins need to be activated.
 		$plugins_need_to_be_activated = false;
-		foreach ( $ai1wm_plugin_slugs as $plugin ) {
+		foreach ( $this->ai1wm_plugin_slugs as $plugin ) {
 			$is_plugin_active = is_plugin_active( $plugin );
 			WP_CLI::debug(
 				message: sprintf( '%1$s is active: %2$s',
@@ -701,63 +673,22 @@ class cli {
 		$network_flag = is_multisite() ? '--network' : '';
 		// if the necessary plugins were not active, activate them.
 		if ( $plugins_need_to_be_activated ) {
-			WP_CLI::log(
-				message: sprintf( 'Activating plugins %1$s...',
-					implode(
-						separator: ' ',
-						array: $ai1wm_plugins,
-					),
-				)
+			$plugin_activate_message = $this->activate_ai1wm_plugins(
+				ai1wm_plugins: $ai1wm_plugins,
+				runcommand_option_defaults: $runcommand_option_defaults,
+				network_flag: $network_flag,
 			);
-			$plugin_activate_options = wp_parse_args (
-				args: [
-					'return' => 'all',
-					'exit_error' => false, // don't exit on error.
-				],
-				defaults: $runcommand_option_defaults,
-			);
-			$plugin_activate_message = WP_CLI::runcommand(
-				command: sprintf( 'plugin activate %1$s %2$s',
-					implode(
-						separator: ' ',
-						array: $ai1wm_plugins,
-					),
-					$network_flag,
-				),
-				options: $plugin_activate_options,
-			);
-			if ( $plugin_activate_message->return_code == '1' ) {
-				WP_CLI::log( message: $plugin_activate_message->stdout );
-				WP_CLI::log( message: $plugin_activate_message->stderr );
-				WP_CLI::halt( return_code: 1 );
-			}
-			// TODO (maybe): remove has_command() method, which is used only once, and refactor below.
-			$has_command_return_options = wp_parse_args (
+			$has_command_return_options = wp_parse_args(
 				args: [
 					'launch' => true,
 					'exit_error' => false, // don't exit on error.
 				],
 				defaults: $runcommand_option_defaults,
 			);
-			$has_ai1wm_command = $this->has_command(
-				command_name: $ai1wm_command,
+			$this->has_command(
+				command_name: $this->ai1wm_command,
 				runcommand_options: $has_command_return_options,
 			);
-			WP_CLI::debug(
-				message: sprintf( '$has_ai1wm_command: %1$s',
-					$has_ai1wm_command ? 'true' : 'false',
-				)
-			);
-			if ( ! $has_ai1wm_command ) {
-				WP_CLI::error(
-					message: sprintf( 'the %s plugins could not be activated.',
-						implode(
-							separator: ' ',
-							array: $ai1wm_plugins,
-						),
-					)
-				);
-			}
 			WP_CLI::log(
 				message: sprintf( '%1$s',
 					$plugin_activate_message->stdout,
@@ -798,7 +729,7 @@ class cli {
 		);
 		$return_message = WP_CLI::runcommand(
 			command: sprintf( '%1$s backup %2$s',
-				$ai1wm_command,
+				$this->ai1wm_command,
 				$ai1wm_command_arguments,
 			),
 			options: $backup_command_return_options,
@@ -810,28 +741,10 @@ class cli {
 		);
 		// don't deactivate the plugins if they were already active.
 		if ( $plugins_need_to_be_activated ) {
-			WP_CLI::log(
-				message: sprintf( 'Deactivating plugins %1$s...',
-					implode(
-						separator: ' ',
-						array: $ai1wm_plugins,
-					),
-				)
-			);
-			$return_message = WP_CLI::runcommand(
-				command: sprintf( 'plugin deactivate %1$s %2$s',
-					implode(
-						separator: ' ',
-						array: $ai1wm_plugins,
-					),
-					$network_flag,
-				),
-				options: $runcommand_option_defaults,
-			);
-			WP_CLI::log(
-				message: sprintf( '%1$s',
-					$return_message,
-				)
+			$this->deactivate_ai1wm_plugins(
+				ai1wm_plugins: $ai1wm_plugins,
+				runcommand_option_defaults: $runcommand_option_defaults,
+				network_flag: $network_flag,
 			);
 		} else {
 			WP_CLI::warning(
@@ -843,6 +756,154 @@ class cli {
 				ucfirst( $type ),
 			)
 		);
+	}
+
+	/**
+	 * Restore WP instance from ai1wm backup.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <wpress_backup_file>
+	 * : .wpress backup file.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Restore website from a1b2c3.wpress.
+	 *     wp bzmn restore a1b2c3.wpress
+	 *
+     * @subcommand restore
+	 */
+	public function restore(
+		array $args = [],
+		array $assoc_args = [],
+	):void
+	{
+		list( $wpress_backup_file, ) = $args;
+		// just get the filename, no parent directory.
+		$wpress_backup_file = basename( path: $wpress_backup_file );
+		WP_CLI::debug(
+			message: sprintf( '$wpress_backup_file: %1$s',
+				$wpress_backup_file,
+			)
+		);
+		$ai1wm_path_option_name = 'ai1wm_backups_path';
+		$ai1wm_path = get_option(
+			option: $ai1wm_path_option_name,
+			default_value: false,
+		);
+		if ( $ai1wm_path ) {
+			$ai1wm_backup_full_path = sprintf( '%1$s/%2$s',
+				$ai1wm_path,
+				$wpress_backup_file,
+			);
+			if ( ! file_exists( filename: $ai1wm_backup_full_path ) ) {
+				WP_CLI::error(
+					message: sprintf( 'The backup file "%1$s" in the backup directory "%2$s" does not exist.',
+						$wpress_backup_file,
+						$ai1wm_path,
+					)
+				);
+			}
+		} else {
+			WP_CLI::error(
+				message: sprintf( 'The database option with the backup directory location, "%1$s," does not exist.',
+					$ai1wm_path_option_name,
+				),
+			);
+		}
+		$ai1wm_plugins = $this->get_plugin_dirs();
+		$this->plugin_presence_check();
+		// determine whether the plugins need to be activated.
+		$plugins_need_to_be_activated = false;
+		foreach ( $this->ai1wm_plugin_slugs as $plugin ) {
+			$is_plugin_active = is_plugin_active( $plugin );
+			WP_CLI::debug(
+				message: sprintf( '%1$s is active: %2$s',
+					$plugin,
+					$is_plugin_active ? 'true' : 'false',
+				)
+			);
+			if ( ! $is_plugin_active ) {
+				$plugins_need_to_be_activated = true;
+				break;
+			}
+		}
+		WP_CLI::debug(
+			message: sprintf( '$plugins_need_to_be_activated: %1$s',
+				$plugins_need_to_be_activated ? 'true' : 'false',
+			)
+		);
+		$wp_path = WP_CLI::get_config( key: 'path' ) ?? '.';
+		// default parameters to WP_CLI::runcommand().
+		$runcommand_option_defaults = [
+			'return' => true,  // capture and return output.
+			'launch' => false, // reuse the current process.
+			'exit_error' => true, // halt script execution on error.
+			'command_args' => [ sprintf( '--path=%1$s', $wp_path ), ], // add path (necessary when an alias is used).
+		];
+		// is this a multisite installation? if so, add flag for activate / deactivate commands.
+		$network_flag = is_multisite() ? '--network' : '';
+		if ( $plugins_need_to_be_activated ) {
+			$plugin_activate_message = $this->activate_ai1wm_plugins(
+				ai1wm_plugins: $ai1wm_plugins,
+				runcommand_option_defaults: $runcommand_option_defaults,
+				network_flag: $network_flag,
+			);
+			// TODO (maybe): remove has_command() method, which is used only once, and refactor below.
+			$has_command_return_options['launch'] = true;
+			$this->has_command(
+				command_name: $this->ai1wm_command,
+				runcommand_options: $has_command_return_options,
+			);
+			WP_CLI::log(
+				message: sprintf( '%1$s',
+					$plugin_activate_message->stdout,
+				)
+			);
+		} else {
+			WP_CLI::warning(
+				message: sprintf( 'The %1$s plugins are already activate. Continuing...',
+					implode(
+						separator: ' and ',
+						array: $ai1wm_plugins,
+					),
+				)
+			);
+		}
+		$ai1wm_command_arguments = sprintf( '--yes %1$s',
+			$wpress_backup_file,
+		);
+		$restore_command_return_options = wp_parse_args (
+			args: [
+				'launch' => true, // run in new process because we've modified the WordPress environment when we activated plugins.
+			],
+			defaults: $runcommand_option_defaults,
+		);
+		$return_message = WP_CLI::runcommand(
+			command: sprintf( '%1$s restore %2$s',
+				$this->ai1wm_command,
+				$ai1wm_command_arguments,
+			),
+			options: $restore_command_return_options,
+		);
+		WP_CLI::log(
+			message: sprintf( '%1$s',
+				$return_message,
+			)
+		);
+		// don't deactivate the plugins if they were already active.
+		if ( $plugins_need_to_be_activated ) {
+			$this->deactivate_ai1wm_plugins(
+				ai1wm_plugins: $ai1wm_plugins,
+				runcommand_option_defaults: $runcommand_option_defaults,
+				network_flag: $network_flag,
+			);
+		} else {
+			WP_CLI::warning(
+				message: 'The plugins were already active and have not been deactivated.'
+			);
+		}
+		WP_CLI::success( message: 'Restore succeeded.' );
 	}
 
 	/**
@@ -1046,12 +1107,13 @@ class cli {
 	 * @param string $command_name
 	 * @param array $runcommand_options
 	 *
-	 * @return bool
+	 * @return void
+	 * @throws ExitException
 	 */
 	private function has_command (
 		string $command_name,
 		array $runcommand_options,
-	):bool
+	):void
 	{
 		// check that the two required plugins are present.
 		$return_code = WP_CLI::runcommand(
@@ -1063,7 +1125,159 @@ class cli {
 		WP_CLI::debug( sprintf( '$return_code: %1$s',
 			$return_code,
 		));
-		return ! ( $return_code == '1' );
+		$has_command = ! ( $return_code == '1' );
+		WP_CLI::debug(
+			message: sprintf( '$has_command: %1$s',
+				$has_command ? 'true' : 'false',
+			)
+		);
+		if ( ! $has_command ) {
+			WP_CLI::error(
+				message: sprintf( 'the "%1$s" command could not be found.',
+					$command_name,
+				)
+			);
+		}
+	}
+
+	/**
+	 * Activate the plugins.
+	 *
+	 * @param array $ai1wm_plugins
+	 * @param array $runcommand_option_defaults
+	 * @param string $network_flag
+	 *
+	 * @return object
+	 * @throws ExitException
+	 */
+	private function activate_ai1wm_plugins(
+		array $ai1wm_plugins,
+		array $runcommand_option_defaults,
+		string $network_flag = '',
+	):object
+	{
+		WP_CLI::log(
+			message: sprintf( 'Activating plugins %1$s...',
+				implode(
+					separator: ' and ',
+					array: $ai1wm_plugins,
+				),
+			)
+		);
+		$plugin_activate_options = wp_parse_args(
+			args: [
+				'return' => 'all',
+				'exit_error' => false, // don't exit on error.
+			],
+			defaults: $runcommand_option_defaults,
+		);
+		$plugin_activate_message = WP_CLI::runcommand(
+			command: sprintf( 'plugin activate %1$s %2$s',
+				implode(
+					separator: ' ',
+					array: $ai1wm_plugins,
+				),
+				$network_flag,
+			),
+			options: $plugin_activate_options,
+		);
+		if ( $plugin_activate_message->return_code == '1' ) {
+			WP_CLI::log( message: $plugin_activate_message->stdout );
+			WP_CLI::log( message: $plugin_activate_message->stderr );
+			WP_CLI::halt( return_code: 1 );
+		}
+		return $plugin_activate_message;
+	}
+
+	/**
+	 * Deactivate the plugins.
+	 *
+	 * @param array $ai1wm_plugins
+	 * @param array $runcommand_option_defaults
+	 * @param string $network_flag
+	 *
+	 * @return void
+	 */
+	private function deactivate_ai1wm_plugins(
+		array $ai1wm_plugins,
+		array $runcommand_option_defaults,
+		string $network_flag = '',
+	):void
+	{
+		WP_CLI::log(
+			message: sprintf( 'Deactivating plugins %1$s...',
+				implode(
+					separator: ' ',
+					array: $ai1wm_plugins,
+				),
+			)
+		);
+		$return_message = WP_CLI::runcommand(
+			command: sprintf( 'plugin deactivate %1$s %2$s',
+				implode(
+					separator: ' ',
+					array: $ai1wm_plugins,
+				),
+				$network_flag,
+			),
+			options: $runcommand_option_defaults,
+		);
+		WP_CLI::log(
+			message: sprintf( '%1$s',
+				$return_message,
+			)
+		);
+	}
+
+	/**
+	 * Check whether plugins are installed.
+	 *
+	 * @return void
+	 * @throws ExitException
+	 */
+	private function plugin_presence_check():void
+	{
+		// the array below should be empty if the required plugins are present, even if inactive.
+		$plugin_presence_check = array_diff(
+			$this->get_plugin_dirs(),
+			array_map(
+				// strip off filename from key ("directory/filename.php").
+				fn ( $plugin_slug ) => dirname( $plugin_slug ),
+				array_keys( get_plugins() ),
+			),
+		);
+		if ( $plugin_presence_check ) {
+			WP_CLI::error(
+				message: sprintf( 'the %1$s %2$s %3$s not installed.',
+					// list of plugins, separated by " and ".
+					implode(
+						separator: ' and ',
+						array: $plugin_presence_check,
+					),
+					// conditional plural.
+					WP_CLI\Utils\pluralize(
+						noun: 'plugin',
+						count: count( $plugin_presence_check ),
+					),
+					// single or plural verb.
+					count( $plugin_presence_check ) == 1 ? 'is': 'are',
+				)
+			);
+		}
+	}
+
+	/**
+	 * Convert the full plugin slugs to just directory names suitable for WP CLI command usage.
+	 *
+	 * @return array
+	 */
+	private function get_plugin_dirs():array
+	{
+		return array_map (
+			// strip off filename from key ("directory/filename.php").
+			fn ( $plugin_slug ) => dirname( $plugin_slug ),
+			$this->ai1wm_plugin_slugs,
+		);
 	}
 
 	/**
