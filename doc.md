@@ -295,6 +295,26 @@ Displays the value of the WP_ENVIRONMENT_TYPE constant.
 
 
 
+### wp bzmn restore
+
+Restore WP instance from ai1wm backup.
+
+~~~
+wp bzmn restore <wpress_backup_file>
+~~~
+
+**OPTIONS**
+
+	<wpress_backup_file>
+		.wpress backup file.
+
+**EXAMPLES**
+
+    # Restore website from a1b2c3.wpress.
+    wp bzmn restore a1b2c3.wpress
+
+
+
 ### wp bzmn set-toolset-post-type-pagination
 
 Set pagination on Toolset > Post Types screen.
