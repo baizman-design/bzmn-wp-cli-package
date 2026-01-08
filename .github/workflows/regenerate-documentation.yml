@@ -2,12 +2,9 @@
 
 name: regenerate doc.md
 on:
-  push:
-    branches:
-      - production
-    paths:
-      - composer.json
-      - src/cli.php
+  workflow_run:
+    workflows: [ "update commands section in composer.json" ]
+    types: [completed]
   # run this workflow manually
   workflow_dispatch:
 
