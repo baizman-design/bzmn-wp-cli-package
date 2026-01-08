@@ -741,10 +741,15 @@ class cli {
 		);
 		// don't deactivate the plugins if they were already active.
 		if ( $plugins_need_to_be_activated ) {
-			$this->deactivate_ai1wm_plugins(
+			$plugin_deactivate_message = $this->deactivate_ai1wm_plugins(
 				ai1wm_plugins: $ai1wm_plugins,
 				runcommand_option_defaults: $runcommand_option_defaults,
 				network_flag: $network_flag,
+			);
+			WP_CLI::log(
+				message: sprintf( '%1$s',
+					$plugin_deactivate_message->stdout,
+				)
 			);
 		} else {
 			WP_CLI::warning(
@@ -893,10 +898,15 @@ class cli {
 		);
 		// don't deactivate the plugins if they were already active.
 		if ( $plugins_need_to_be_activated ) {
-			$this->deactivate_ai1wm_plugins(
+			$plugin_deactivate_message = $this->deactivate_ai1wm_plugins(
 				ai1wm_plugins: $ai1wm_plugins,
 				runcommand_option_defaults: $runcommand_option_defaults,
 				network_flag: $network_flag,
+			);
+			WP_CLI::log(
+				message: sprintf( '%1$s',
+					$plugin_deactivate_message->stdout,
+				)
 			);
 		} else {
 			WP_CLI::warning(
@@ -1196,13 +1206,14 @@ class cli {
 	 * @param array $runcommand_option_defaults
 	 * @param string $network_flag
 	 *
-	 * @return void
+	 * @return object
+	 * @throws ExitException
 	 */
 	private function deactivate_ai1wm_plugins(
 		array $ai1wm_plugins,
 		array $runcommand_option_defaults,
 		string $network_flag = '',
-	):void
+	):object
 	{
 		WP_CLI::log(
 			message: sprintf( 'Deactivating plugins %1$s...',
@@ -1212,7 +1223,14 @@ class cli {
 				),
 			)
 		);
-		$return_message = WP_CLI::runcommand(
+		$plugin_deactivate_options = wp_parse_args(
+			args: [
+				'return' => 'all',
+				'exit_error' => false, // don't exit on error.
+			],
+			defaults: $runcommand_option_defaults,
+		);
+		$plugin_deactivate_message = WP_CLI::runcommand(
 			command: sprintf( 'plugin deactivate %1$s %2$s',
 				implode(
 					separator: ' ',
@@ -1220,13 +1238,14 @@ class cli {
 				),
 				$network_flag,
 			),
-			options: $runcommand_option_defaults,
+			options: $plugin_deactivate_options,
 		);
-		WP_CLI::log(
-			message: sprintf( '%1$s',
-				$return_message,
-			)
-		);
+		if ( $plugin_deactivate_message->return_code == '1' ) {
+			WP_CLI::log( message: $plugin_deactivate_message->stdout );
+			WP_CLI::log( message: $plugin_deactivate_message->stderr );
+			WP_CLI::halt( return_code: 1 );
+		}
+		return $plugin_deactivate_message;
 	}
 
 	/**
