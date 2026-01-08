@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: check out the repository
         uses: actions/checkout@v4
+      - name: check php version
+        run: php -v
       - name: run bin/update-composer-json-commands.php
         run: php bin/update-composer-json-commands.php
       - name: commit composer.json, if needed
