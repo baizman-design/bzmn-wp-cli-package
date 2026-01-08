@@ -379,13 +379,15 @@ class cli {
      * ## EXAMPLES
      *
      *     # Delete the WooCommerce transients.
-     *     wp bzmn delete-wc-transients
+     *     wp bzmn delete-woocommerce-transients
      *     Success: Deleted WooCommerce payment field style transients.
      *
-     * @subcommand delete-wc-transients
+     * @subcommand delete-woocommerce-transients
+     * @alias delete_woocommerce_transients
+     * @alias delete-wc-transients
      * @alias delete_wc_transients
      */
-    public function delete_wc_transients():void
+    public function delete_woocommerce_transients():void
     {
         // https://woocommerce.com/document/woopayments/customization-and-translation/customize-payments-appearance/
 		$transients = [
@@ -619,7 +621,9 @@ class cli {
 				)
 			);
 			// we're done here.
-			WP_CLI::halt( return_code: 0 );
+			WP_CLI::halt(
+				return_code: 0,
+			);
 		}
 		$ai1wm_plugins = $this->get_plugin_dirs();
 		$this->plugin_presence_check();
@@ -643,7 +647,9 @@ class cli {
 				$plugins_need_to_be_activated ? 'true' : 'false',
 			)
 		);
-		$wp_path = WP_CLI::get_config( key: 'path' ) ?? '.';
+		$wp_path = WP_CLI::get_config(
+			key: 'path',
+		) ?? '.';
 		// arguments for quick backup, sans leading double-dashes ("--").
 		$quick_backup_args = [
 			'exclude-spam-comments',
@@ -659,7 +665,9 @@ class cli {
 		];
 		// prepend double-dash to all quick backup arguments.
 		$quick_backup_args = array_map(
-			callback: fn ( $arg ) => sprintf( '--%1$s', $arg ),
+			callback: fn ( $arg ) => sprintf( '--%1$s',
+				$arg,
+			),
 			array: $quick_backup_args,
 		);
 		// default parameters to WP_CLI::runcommand().
@@ -1081,14 +1089,16 @@ class cli {
 		$runcommand_options_defaults = [
 			'return' => 'all', // capture and return output.
 			'launch' => false, // reuse the current process.
-			'exit_error' => true, // halt script execution on error.
+			'exit_error' => false, // halt script execution on error.
 		];
 		$runcommand_options = wp_parse_args (
 			args: $override_options,
 			defaults: $runcommand_options_defaults,
 		);
 		if ( ! $this->dry_run ) {
-			WP_CLI::log( message: 'backing up the database...' );
+			WP_CLI::log(
+				message: 'backing up the database...',
+			);
 			$output = WP_CLI::runcommand(
 				command: sprintf( 'db export %1$s --porcelain',
 					$file,
@@ -1097,17 +1107,24 @@ class cli {
 			);
 			if ( $output->return_code == '1' ) {
 				WP_CLI::error(
+					message: $output->stdout,
+					exit: false,
+				);
+				WP_CLI::error(
 					message: $output->stderr,
-					exit: true,
 				);
 			}
 			WP_CLI::log( sprintf( 'backup filename: %1$s',
 				$output->stdout,
 			));
-			WP_CLI::log( message: '...done' );
+			WP_CLI::log(
+				message: '...done',
+			);
 		}
 		else {
-			WP_CLI::log( message: '...skipping backup on dry-run...' );
+			WP_CLI::log(
+				message: '...skipping backup on dry-run...',
+			);
 		}
 	}
 
@@ -1192,9 +1209,20 @@ class cli {
 			options: $plugin_activate_options,
 		);
 		if ( $plugin_activate_message->return_code == '1' ) {
-			WP_CLI::log( message: $plugin_activate_message->stdout );
-			WP_CLI::log( message: $plugin_activate_message->stderr );
-			WP_CLI::halt( return_code: 1 );
+			if ( $plugin_activate_message->stdout ) {
+				WP_CLI::error(
+					message: $plugin_activate_message->stdout,
+					exit: false,
+				);
+			}
+			if ( $plugin_activate_message->stderr ) {
+				WP_CLI::log(
+					message: $plugin_activate_message->stderr,
+				);
+			}
+			WP_CLI::halt(
+				return_code: 1,
+			);
 		}
 		return $plugin_activate_message;
 	}
@@ -1241,9 +1269,20 @@ class cli {
 			options: $plugin_deactivate_options,
 		);
 		if ( $plugin_deactivate_message->return_code == '1' ) {
-			WP_CLI::log( message: $plugin_deactivate_message->stdout );
-			WP_CLI::log( message: $plugin_deactivate_message->stderr );
-			WP_CLI::halt( return_code: 1 );
+			if ( $plugin_deactivate_message->stdout ) {
+				WP_CLI::error(
+					message: $plugin_deactivate_message->stdout,
+					exit: false,
+				);
+			}
+			if ( $plugin_deactivate_message->stderr ) {
+				WP_CLI::log(
+					message: $plugin_deactivate_message->stderr,
+				);
+			}
+			WP_CLI::halt(
+				return_code: 1,
+			);
 		}
 		return $plugin_deactivate_message;
 	}
@@ -1313,9 +1352,9 @@ class cli {
 	{
 		// options for WP_CLI::runcommand().
 		$runcommand_options = [
-			'return'     => true,  // capture and return output.
+			'return'     => 'all',  // capture and return output.
 			'launch'     => false, // reuse the current process.
-			'exit_error' => true, // halt script execution on error.
+			'exit_error' => false, // halt script execution on error.
 		];
 		// get current setting.
 		$current_value = WP_CLI::runcommand(
@@ -1324,24 +1363,65 @@ class cli {
 			),
 			options: $runcommand_options,
 		);
+		// something went wrong.
+		if ( $current_value->return_code == '1' ) {
+			WP_CLI::error(
+				message: sprintf( 'the value of %1$s could not be obtained.',
+					$constant,
+				),
+				exit: false,
+			);
+			if ( $current_value->stdout ) {
+				WP_CLI::error(
+					message: $current_value->stdout,
+					exit: false,
+				);
+			}
+			if ( $current_value->stderr ) {
+				WP_CLI::log(
+					message: $current_value->stderr,
+				);
+			}
+			WP_CLI::halt(
+				return_code: 1,
+			);
+		}
 		// set to opposite of current setting.
 		$new_value_message = WP_CLI::runcommand(
 			command: sprintf( 'config set %1$s %2$s --raw',
 				$constant,
-				! ! $current_value ? 'false' : 'true',
+				! ! $current_value->stdout ? 'false' : 'true',
 			),
 			options: $runcommand_options,
 		);
-		if ( str_contains( haystack: $new_value_message, needle: 'Success:' ) ) {
-			WP_CLI::success( sprintf( '%1$s is set to %2$s.',
-				$constant,
-				! $current_value ? 'true' : 'false',
-			));
+		if ( $new_value_message->return_code == '0' ) {
+			WP_CLI::success(
+				message: sprintf( '%1$s is set to %2$s.',
+					$constant,
+					! $current_value->stdout ? 'true' : 'false',
+				)
+			);
 		} else {
-			WP_CLI::error( sprintf( '%1$s could not be updated.',
-				$constant,
-			));
+			WP_CLI::error(
+				message: sprintf( '%1$s could not be updated.',
+					$constant,
+				),
+				exit: false,
+			);
+			if ( $new_value_message->stdout ) {
+				WP_CLI::error(
+					message: $new_value_message->stdout,
+					exit: false,
+				);
+			}
+			if ( $new_value_message->stderr ) {
+				WP_CLI::log(
+					message: $new_value_message->stderr,
+				);
+			}
+			WP_CLI::halt(
+				return_code: 1,
+			);
 		}
 	}
-
 }

@@ -40,7 +40,7 @@
             "bzmn backup",
             "bzmn clear-cloudflare-cache",
             "bzmn clear-sucuri-cache",
-            "bzmn delete-wc-transients",
+            "bzmn delete-woocommerce-transients",
             "bzmn flush-rewrite-rules",
             "bzmn populate-post-meta",
             "bzmn print-custom-post-types",
