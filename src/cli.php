@@ -892,6 +892,12 @@ class cli {
 			],
 			defaults: $runcommand_option_defaults,
 		);
+		WP_CLI::log(
+			message: sprintf( 'Restoring %1$s from %2$s...',
+				get_site_url(),
+				$wpress_backup_file,
+			)
+		);
 		$return_message = WP_CLI::runcommand(
 			command: sprintf( '%1$s restore %2$s',
 				$this->ai1wm_command,
