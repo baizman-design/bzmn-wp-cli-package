@@ -759,6 +759,10 @@ class cli {
 			WP_CLI::halt(
 				return_code: 1,
 			);
+		} else {
+			WP_CLI::log(
+				message: $backup_command_return_message->stdout,
+			);
 		}
 		// don't deactivate the plugins if they were already active.
 		if ( $plugins_need_to_be_activated ) {
