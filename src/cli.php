@@ -731,22 +731,35 @@ class cli {
 		);
 		$backup_command_return_options = wp_parse_args (
 			args: [
+				'return' => 'all', // return all information.
 				'launch' => true, // run in new process because we've modified the WordPress environment when we activated plugins.
+				'exit_error' => false, // don't quit on error.
 			],
 			defaults: $runcommand_option_defaults,
 		);
-		$return_message = WP_CLI::runcommand(
+		$backup_command_return_message = WP_CLI::runcommand(
 			command: sprintf( '%1$s backup %2$s',
 				$this->ai1wm_command,
 				$ai1wm_command_arguments,
 			),
 			options: $backup_command_return_options,
 		);
-		WP_CLI::log(
-			message: sprintf( '%1$s',
-				$return_message,
-			)
-		);
+		if ( $backup_command_return_message->return_code == '1' ) {
+			if ( $backup_command_return_message->stdout ) {
+				WP_CLI::error(
+					message: $backup_command_return_message->stdout,
+					exit: false,
+				);
+			}
+			if ( $backup_command_return_message->stderr ) {
+				WP_CLI::log(
+					message: $backup_command_return_message->stderr,
+				);
+			}
+			WP_CLI::halt(
+				return_code: 1,
+			);
+		}
 		// don't deactivate the plugins if they were already active.
 		if ( $plugins_need_to_be_activated ) {
 			$plugin_deactivate_message = $this->deactivate_ai1wm_plugins(
