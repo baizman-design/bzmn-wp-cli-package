@@ -36,7 +36,7 @@
         "issues": "https://github.com/baizman-design/bzmn-wp-cli-package/issues"
     },
     "extra": {
-       "commands": [
+        "commands": [
             "bzmn backup",
             "bzmn clear-cloudflare-cache",
             "bzmn clear-sucuri-cache",
@@ -50,12 +50,12 @@
             "bzmn set-toolset-post-type-pagination",
             "bzmn toggle-debug",
             "bzmn toggle-debug-display"
-       ],
-       "readme": {
-           "sections": [
+        ],
+        "readme": {
+            "sections": [
                 "Using"
-           ],
-           "show_powered_by": false
-       }
-   }
+            ],
+            "show_powered_by": false
+        }
+    }
 }
