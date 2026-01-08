@@ -101,18 +101,18 @@ wp bzmn clear-sucuri-cache <api_key> <api_secret> [<filename>]
 
 
 
-### wp bzmn delete-wc-transients
+### wp bzmn delete-woocommerce-transients
 
 Delete WooCommerce payment field style transients.
 
 ~~~
-wp bzmn delete-wc-transients 
+wp bzmn delete-woocommerce-transients 
 ~~~
 
 **EXAMPLES**
 
     # Delete the WooCommerce transients.
-    wp bzmn delete-wc-transients
+    wp bzmn delete-woocommerce-transients
     Success: Deleted WooCommerce payment field style transients.
 
 
