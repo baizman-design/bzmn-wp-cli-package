@@ -23,6 +23,7 @@ jobs:
   regenerate-readme:
     name: Regenerate doc.md and commit it back to the repository
     runs-on: ubuntu-latest
+    timeout-minutes: 3
     container:
       image: ghcr.io/baizman-design/wp-cli-package
       credentials:
