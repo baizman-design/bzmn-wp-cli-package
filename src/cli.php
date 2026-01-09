@@ -384,8 +384,6 @@ class cli {
      *
      * @subcommand delete-woocommerce-transients
      * @alias delete_woocommerce_transients
-     * @alias delete-wc-transients
-     * @alias delete_wc_transients
      */
     public function delete_woocommerce_transients():void
     {
