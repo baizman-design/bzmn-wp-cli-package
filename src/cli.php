@@ -6,7 +6,7 @@ use WP_CLI;
 use WP_CLI\ExitException;
 use WP_Query;
 
-class cli {
+final class cli {
 
 	// flag to set whether the changes are made.
 	private bool $dry_run = false;
