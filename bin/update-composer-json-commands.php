@@ -10,8 +10,13 @@ use ReflectionClass;
 use ReflectionMethod;
 
 $command_name = 'bzmn';
-$command_path = dirname(__DIR__) . '/src/cli.php';
-$composer = dirname(__DIR__) . '/composer.json';
+$grandparent_directory = dirname( __DIR__ );
+$command_path = sprintf( '%1$s/src/cli.php',
+	$grandparent_directory,
+);
+$composer = sprintf( '%1$s/composer.json',
+	$grandparent_directory,
+);
 $debugging_flags = [
 	'-d',
 	'--debug',
