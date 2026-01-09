@@ -723,9 +723,12 @@ class cli {
 			)
 		);
 		WP_CLI::log(
-			message: sprintf( 'Backup site: %1$s...',
+			message: sprintf( 'Backup site: %1$s',
 				get_site_url(),
 			)
+		);
+		WP_CLI::log(
+			message: 'Starting backup...',
 		);
 		$backup_command_return_options = wp_parse_args (
 			args: [
