@@ -1246,8 +1246,8 @@ final class cli {
 			$totals[] = [
 				'directory' => 'core directories subtotal',
 				'size' => $this->_reformat_size_format(
-						size: $this->_tally_bites(
-						directory: $core_directories,
+						size: array_sum(
+							array: $core_directories,
 					),
 					os: $os,
 				),
@@ -1284,8 +1284,8 @@ final class cli {
 			$totals[] = [
 				'directory' => 'other directories subtotal',
 				'size' => $this->_reformat_size_format(
-						size: $this->_tally_bites(
-						directory: $other_directories,
+						size: array_sum(
+						array: $other_directories,
 					),
 					os: $os,
 				),
@@ -1302,8 +1302,8 @@ final class cli {
 		$totals[] = [
 			'directory' => basename( path: WP_CONTENT_DIR ) . ' total',
 			'size' => $this->_reformat_size_format(
-				size: $this->_tally_bites(
-					directory: $subdirectories_array,
+				size: array_sum(
+					array: $subdirectories_array,
 				),
 				decimals: 2,
 				os: $os,
@@ -1746,24 +1746,4 @@ final class cli {
 		);
 	}
 
-	/**
-	 * Tally bites.
-	 *
-	 * @param array $directory
-	 *
-	 * @return int
-	 */
-	private function _tally_bites (
-		array $directory,
-	):int
-	{
-		$total_bytes = 0;
-		array_map(
-			callback: function ( $directory_size ) use ( &$total_bytes ) {
-				$total_bytes += $directory_size;
-			},
-			array: $directory,
-		);
-		return $total_bytes;
-	}
 }
