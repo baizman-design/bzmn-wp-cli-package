@@ -20,7 +20,7 @@ RUN wget -q -O wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/
     && wget -q -O composer https://getcomposer.org/download/latest-stable/composer.phar \
     && chmod +x wp composer \
     && ln -s /usr/bin/php83 ./php \
-    && wp package install "wp-cli/scaffold-package-command:^2"
+    && wp package install wp-cli/scaffold-package-command
 
 # create wp-cli directory.
 WORKDIR /root/.wp-cli
