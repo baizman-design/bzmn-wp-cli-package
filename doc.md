@@ -35,13 +35,13 @@ wp bzmn backup [--type=<type>]
     # Make a default (quick) backup.
     wp bzmn backup
 
-    # Make a quick backup.
+    # Make a quick (database) backup.
     wp bzmn backup --type=quick
 
     # Make a full (file and database) backup.
     wp bzmn backup --type=full
 
-    # Make a database backup.
+    # Make a database (SQL) backup.
     wp bzmn backup --type=sql
 
 
@@ -105,6 +105,21 @@ wp bzmn delete-woocommerce-transients
     # Delete the WooCommerce transients.
     wp bzmn delete-woocommerce-transients
     Success: Deleted WooCommerce payment field style transients.
+
+
+
+### wp bzmn disk-usage
+
+Display the disk usage of wp-content.
+
+~~~
+wp bzmn disk-usage 
+~~~
+
+**EXAMPLES**
+
+    # Display the disk usage.
+    wp bzmn disk-usage
 
 
 
