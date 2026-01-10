@@ -1224,31 +1224,39 @@ final class cli {
 			},
 			ARRAY_FILTER_USE_BOTH
 		);
-		$message = [];
-		$message[] = '';
+		WP_CLI::log('');
 		$core_directories_formatted = array_map(
 			function ( $directory, $size ) use ( $os ) {
-				return sprintf('%1$s: %2$s',
-					basename(
+				return [
+					'directory' => basename(
 						path: $directory,
 					),
-					$this->_reformat_size_format(
+					'size' => $this->_reformat_size_format(
 						size: $size,
 						os: $os,
-					),
-				);
+					)
+				];
 			},
 			array_keys( $core_directories ),
 			array_values( $core_directories ),
 		);
 		if ( $core_directories_formatted ) {
 			$core_label = __( text: 'Core Directories' );
-			$message[] = $core_label;
-			$message[] = str_repeat(
-				string:'-',
-				times: strlen( string: $core_label ),
+			WP_CLI::log( $core_label );
+			$totals[] = [
+				'directory' => 'core directories subtotal',
+				'size' => $this->_reformat_size_format(
+						size: $this->_tally_bites(
+						directory: $core_directories,
+					),
+					os: $os,
+				),
+			];
+			WP_CLI\Utils\format_items(
+				format: 'table',
+				items: $core_directories_formatted,
+				fields: array_keys( $core_directories_formatted[0] ),
 			);
-			$message = array_merge( $message, $core_directories_formatted, );
 		} else {
 			WP_CLI::error(
 				message: 'The "du" command was not found or could not be run.',
@@ -1256,53 +1264,57 @@ final class cli {
 		}
 		$other_directories_formatted = array_map(
 			function ( $directory, $size ) use ( $os ) {
-				return sprintf('%1$s: %2$s',
-					basename(
+				return [
+					'directory' => basename(
 						path: $directory,
 					),
-					$this->_reformat_size_format(
+					'size' => $this->_reformat_size_format(
 						size: $size,
 						os: $os,
-					),
-				);
+					)
+				];
 			},
 			array_keys( $other_directories ),
 			array_values( $other_directories ),
 		);
 		if ( $other_directories_formatted ) {
-			$message[] = '';
+			WP_CLI::log('');
 			$other_label = __( text: 'Other Directories' );
-			$message[] = $other_label;
-			$message[] = str_repeat(
-				string:'-',
-				times: strlen( string: $other_label ),
+			WP_CLI::log( $other_label );
+			$totals[] = [
+				'directory' => 'other directories subtotal',
+				'size' => $this->_reformat_size_format(
+						size: $this->_tally_bites(
+						directory: $other_directories,
+					),
+					os: $os,
+				),
+			];
+			WP_CLI\Utils\format_items(
+				format: 'table',
+				items: $other_directories_formatted,
+				fields: array_keys( $other_directories_formatted[0] ),
 			);
-			$message = array_merge( $message, $other_directories_formatted, );
 		}
 		// sum the total.
-		$total_bytes = 0;
-		array_map(
-			callback: function ( $subdirectory_size ) use ( &$total_bytes ) {
-				$total_bytes += $subdirectory_size;
-			},
-			array: $subdirectories_array,
-		);
-		$message[] = '';
-		$message[] = sprintf( '%1$s: %2$s',
-			__( text: 'Total disk usage in' ) . ' ' . basename( path: WP_CONTENT_DIR ),
-			$this->_reformat_size_format(
-				size: $total_bytes,
+		WP_CLI::log('');
+		WP_CLI::log('Total');
+		$totals[] = [
+			'directory' => basename( path: WP_CONTENT_DIR ) . ' total',
+			'size' => $this->_reformat_size_format(
+				size: $this->_tally_bites(
+					directory: $subdirectories_array,
+				),
 				decimals: 2,
 				os: $os,
 			),
+		];
+		WP_CLI\Utils\format_items(
+			format: 'table',
+			items: $totals,
+			fields: array_keys( $totals[0] ),
 		);
-		$message[] = '';
-		WP_CLI::log(
-			message: implode(
-				separator: PHP_EOL,
-				array: $message,
-			),
-		);
+		WP_CLI::log('');
 	}
 
 	/**
@@ -1732,5 +1744,26 @@ final class cli {
 			$amount,
 			$unit[0], // get first character.
 		);
+	}
+
+	/**
+	 * Tally bites.
+	 *
+	 * @param array $directory
+	 *
+	 * @return int
+	 */
+	private function _tally_bites (
+		array $directory,
+	):int
+	{
+		$total_bytes = 0;
+		array_map(
+			callback: function ( $directory_size ) use ( &$total_bytes ) {
+				$total_bytes += $directory_size;
+			},
+			array: $directory,
+		);
+		return $total_bytes;
 	}
 }
