@@ -1153,7 +1153,7 @@ final class cli {
 		);
 		if ( ! $this->dry_run ) {
 			WP_CLI::log(
-				message: 'backing up the database...',
+				message: 'Backing up the database...',
 			);
 			$output = WP_CLI::runcommand(
 				command: sprintf( 'db export %1$s --porcelain',
@@ -1162,17 +1162,27 @@ final class cli {
 				options: $runcommand_options,
 			);
 			if ( $output->return_code == '1' ) {
-				WP_CLI::error(
-					message: $output->stdout,
-					exit: false,
-				);
-				WP_CLI::error(
-					message: $output->stderr,
+				if ( $output->stdout ) {
+					WP_CLI::error(
+						message: $output->stdout,
+						exit: false,
+					);
+				}
+				if ( $output->stderr ) {
+					WP_CLI::error(
+						message: $output->stderr,
+						exit: false,
+					);
+				}
+				WP_CLI::halt(
+					return_code: 1,
 				);
 			}
-			WP_CLI::log( sprintf( 'backup filename: %1$s',
-				$output->stdout,
-			));
+			WP_CLI::log(
+				message: sprintf( 'Backup filename: %1$s',
+					$output->stdout,
+				),
+			);
 			WP_CLI::log(
 				message: '...done',
 			);
