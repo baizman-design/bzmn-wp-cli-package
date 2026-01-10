@@ -48,18 +48,15 @@ wp bzmn backup [--type=<type>]
 
 ### wp bzmn clear-cloudflare-cache
 
-Clear the Cloudflare cache. Default: purge everything.
+Clear the Cloudflare cache. Default: purge everything. Uses $CLOUDFLARE_API_KEY environment variable.
 
 ~~~
-wp bzmn clear-cloudflare-cache <api_key> <zone_id>
+wp bzmn clear-cloudflare-cache <zone_id>
 ~~~
 
 API documentation: https://developers.cloudflare.com/api/resources/cache/
 
 **OPTIONS**
-
-	<api_key>
-		Cloudflare API key.
 
 	<zone_id>
 		Cloudflare zone ID.
@@ -67,26 +64,20 @@ API documentation: https://developers.cloudflare.com/api/resources/cache/
 **EXAMPLES**
 
     # Clear the cloudflare cache for a domain.
-    wp bzmn clear-cloudflare-cache 12345 ABCDE
+    wp bzmn clear-cloudflare-cache 12345
     Success: The Cloudflare cache has been cleared.
 
 
 
 ### wp bzmn clear-sucuri-cache
 
-Clear the Sucuri firewall cache.
+Clear the Sucuri firewall cache. Uses $SUCURI_API_KEY and $SUCURI_API_SECRET environment variables.
 
 ~~~
-wp bzmn clear-sucuri-cache <api_key> <api_secret> [<filename>]
+wp bzmn clear-sucuri-cache [<filename>]
 ~~~
 
 **OPTIONS**
-
-	<api_key>
-		Sucuri API key.
-
-	<api_secret>
-		Sucuri API secret.
 
 	[<filename>]
 		A filename to remove from the cache.
@@ -94,10 +85,10 @@ wp bzmn clear-sucuri-cache <api_key> <api_secret> [<filename>]
 **EXAMPLES**
 
     # Clear the Sucuri cache for a domain.
-    wp bzmn clear-sucuri-cache 12345 ABCDE
+    wp bzmn clear-sucuri-cache
 
     # Clear the Sucuri cache for the file index.php.
-    wp bzmn clear-sucuri-cache 12345 ABCDE index.php
+    wp bzmn clear-sucuri-cache index.php
 
 
 
