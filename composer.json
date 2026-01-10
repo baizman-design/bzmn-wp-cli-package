@@ -41,6 +41,7 @@
             "bzmn clear-cloudflare-cache",
             "bzmn clear-sucuri-cache",
             "bzmn delete-woocommerce-transients",
+            "bzmn disk-usage",
             "bzmn flush-rewrite-rules",
             "bzmn populate-post-meta",
             "bzmn print-custom-post-types",
