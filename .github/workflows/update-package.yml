@@ -1,0 +1,37 @@
+# connect to various remote hosts and update all WP CLI packages.
+# note: we pass "-o LogLevel=ERROR" to the ssh command to quell some warnings.
+
+name: update bzmn wp cli package on remote hosts
+on:
+  # run this workflow manually
+  workflow_dispatch:
+
+env:
+  repo_remote_hosts: ${{ vars.REPO_REMOTE_HOSTS }}
+  logfile: /tmp/log.txt
+
+jobs:
+  update-package:
+    name: update package on remote hosts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: make .ssh directory
+        run: mkdir -vp ~/.ssh
+      - name: download ssh/config
+        run: >
+          curl -s -S -L -H "Accept: application/vnd.github.raw+json" -H "Authorization: Bearer ${{ secrets.GH_ACCESS_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" -o ~/.ssh/config https://api.github.com/repos/baizmandesign/dotfiles/contents/ssh/config
+      - name: install shared ssh key and set file permissions
+        run: >
+          curl -s -S -L -H "Accept: application/vnd.github.raw+json" -H "Authorization: Bearer ${{ secrets.GH_ACCESS_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" -o ~/.ssh/id_rsa https://api.github.com/repos/baizman-design/github-actions-ssh-keys/contents/docker;
+          chmod 600 ~/.ssh/id_rsa
+      - name: ssh to remote hosts and run wp package update
+        run: >
+          remote_hosts="${{ env.repo_remote_hosts }}";
+          for remote_host in ${remote_hosts//$'\r'/''};
+          do
+          echo "ssh ${remote_host} wp package update" | tee -a ${{ env.logfile }};
+          ssh -o LogLevel=ERROR ${remote_host} wp package update | tee -a ${{ env.logfile }};
+          done;
+          cat ${{ env.logfile }} >> ${GITHUB_STEP_SUMMARY};
+          rm -f ${{ env.logfile }}
