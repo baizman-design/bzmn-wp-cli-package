@@ -949,15 +949,9 @@ final class cli {
 	}
 
 	/**
-	 * Clear the Sucuri firewall cache.
+	 * Clear the Sucuri firewall cache. Uses $SUCURI_API_KEY and $SUCURI_API_SECRET environment variables.
 	 *
 	 * ## OPTIONS
-	 *
-	 * <api_key>
-	 * : Sucuri API key.
-	 *
-	 * <api_secret>
-	 * : Sucuri API secret.
 	 *
 	 * [<filename>]
 	 * : A filename to remove from the cache.
@@ -965,10 +959,10 @@ final class cli {
 	 * ## EXAMPLES
 	 *
 	 *     # Clear the Sucuri cache for a domain.
-	 *     wp bzmn clear-sucuri-cache 12345 ABCDE
+	 *     wp bzmn clear-sucuri-cache
 	 *
 	 *     # Clear the Sucuri cache for the file index.php.
-	 *     wp bzmn clear-sucuri-cache 12345 ABCDE index.php
+	 *     wp bzmn clear-sucuri-cache index.php
 	 *
 	 * @subcommand clear-sucuri-cache
 	 * @alias clear_sucuri_cache
@@ -978,12 +972,28 @@ final class cli {
 		array $assoc_args = [],
 	):void
 	{
-		list( $api_key, $api_secret, $filename, ) = $args;
+		list( $filename, ) = $args;
+		$api_key = getenv(
+			name: 'SUCURI_API_KEY',
+		);
+		if ( ! $api_key) {
+			WP_CLI::error(
+				message: 'Environment variable $SUCURI_API_KEY is missing.',
+			);
+		}
+		$api_secret = getenv(
+			name: 'SUCURI_API_SECRET',
+		);
+		if ( ! $api_secret) {
+			WP_CLI::error(
+				message: 'Environment variable $SUCURI_API_SECRET is missing.',
+			);
+		}
 		$data = [
 			'k' => $api_key, // key
 			's' => $api_secret, // secret
 			'a' => 'clear_cache', // action
-		] ;
+		];
 		$message = 'Attempting to clear the cache for' ;
 		// append filename to array, if needed.
 		if ( $filename ) {
@@ -994,16 +1004,21 @@ final class cli {
 		} else {
 			$message .= ' the entire domain';
 		}
+		// append ellipsis.
 		$message .= '...';
-		WP_CLI::log( $message );
+		WP_CLI::log(
+			message: $message,
+		);
 		// https://waf.sucuri.net/?settings&site=lifetimearts.org&panel=api
 		$response = wp_remote_post (
 			url: 'https://waf.sucuri.net/api?v2',
 			args: [
 				'body' => $data,
-			]
+			],
 		);
-		$response_code = wp_remote_retrieve_response_code( response: $response );
+		$response_code = wp_remote_retrieve_response_code(
+			response: $response,
+		);
 		$response_body = json_decode(
 			json: wp_remote_retrieve_body( $response ),
 			associative: true,
@@ -1016,21 +1031,22 @@ final class cli {
 		$command_status = $response_body['status'];
 		// note: errors also return a 200 status code.
 		if ( $response_code == 200 && $command_status == '1' ) {
-			WP_CLI::success( $response_message );
+			WP_CLI::success(
+				message: $response_message,
+			);
 		} else {
-			WP_CLI::error( $response_message );
+			WP_CLI::error(
+				message: $response_message,
+			);
 		}
 	}
 
 	/**
-	 * Clear the Cloudflare cache. Default: purge everything.
+	 * Clear the Cloudflare cache. Default: purge everything. Uses $CLOUDFLARE_API_KEY environment variable.
 	 *
 	 * API documentation: https://developers.cloudflare.com/api/resources/cache/
 	 *
 	 * ## OPTIONS
-	 *
-	 * <api_key>
-	 * : Cloudflare API key.
 	 *
 	 * <zone_id>
 	 * : Cloudflare zone ID.
@@ -1038,18 +1054,26 @@ final class cli {
 	 * ## EXAMPLES
 	 *
 	 *     # Clear the cloudflare cache for a domain.
-	 *     wp bzmn clear-cloudflare-cache 12345 ABCDE
+	 *     wp bzmn clear-cloudflare-cache 12345
 	 *     Success: The Cloudflare cache has been cleared.
 	 *
 	 * @subcommand clear-cloudflare-cache
 	 * @alias clear_cloudflare_cache
 	 */
 	public function clear_cloudflare_cache(
-		$args,
-		$assoc_args
+		$args = [],
+		$assoc_args = [],
 	):void
 	{
-		list( $api_key, $zone_id, ) = $args;
+		list( $zone_id, ) = $args;
+		$api_key = getenv(
+			name: 'CLOUDFLARE_API_KEY',
+		);
+		if ( ! $api_key) {
+			WP_CLI::error(
+				message: 'Environment variable $CLOUDFLARE_API_KEY is missing.',
+			);
+		}
 		$data = [
 			'purge_everything' => true,
 		];
@@ -1081,18 +1105,26 @@ final class cli {
 		);
 		$command_status = $response_body['success'] ?? false;
 		if ( is_wp_error( thing: $response ) || wp_remote_retrieve_response_code( response: $response ) !== 200 || empty ( wp_remote_retrieve_body( response: $response ) ) || ! $command_status ) {
-			WP_CLI::error( message: 'Failed to clear the Cloudflare cache.' );
-			WP_CLI::debug( message: sprintf( 'Details: %1$s',
-				print_r(
-					value: $response,
-					return: true
+			WP_CLI::error(
+				message: 'Failed to clear the Cloudflare cache.',
+			);
+			WP_CLI::debug(
+				message: sprintf( 'Details: %1$s',
+					print_r(
+						value: $response,
+						return: true
+					),
 				),
-			));
+			);
 		}
 		if ( $command_status ) {
-			WP_CLI::success( message: 'The Cloudflare cache has been cleared.' );
+			WP_CLI::success(
+				message: 'The Cloudflare cache has been cleared.',
+			);
 		} else {
-			WP_CLI::error( message: 'An unknown error occurred while trying to clear the Cloudflare cache.' );
+			WP_CLI::error(
+				message: 'An unknown error occurred while trying to clear the Cloudflare cache.',
+			);
 		}
 	}
 
