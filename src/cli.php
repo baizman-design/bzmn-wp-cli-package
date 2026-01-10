@@ -584,13 +584,13 @@ final class cli {
 	 *     # Make a default (quick) backup.
 	 *     wp bzmn backup
 	 *
-	 *     # Make a quick backup.
+	 *     # Make a quick (database) backup.
 	 *     wp bzmn backup --type=quick
 	 *
 	 *     # Make a full (file and database) backup.
 	 *     wp bzmn backup --type=full
 	 *
-	 *     # Make a database backup.
+	 *     # Make a database (SQL) backup.
 	 *     wp bzmn backup --type=sql
 	 *
      * @subcommand backup
