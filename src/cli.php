@@ -1298,7 +1298,8 @@ final class cli {
 		}
 		// sum the total.
 		WP_CLI::log('');
-		WP_CLI::log('Total');
+		$total_label = __( text: 'Totals' );
+		WP_CLI::log( $total_label );
 		$totals[] = [
 			'directory' => basename( path: WP_CONTENT_DIR ) . ' total',
 			'size' => $this->_reformat_size_format(
