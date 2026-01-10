@@ -1129,6 +1129,183 @@ final class cli {
 	}
 
 	/**
+	 * Display the disk usage of wp-content.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     # Display the disk usage.
+	 *     wp bzmn disk-usage
+	 *
+	 * @subcommand disk-usage
+	 * @alias du
+	 */
+	public function disk_usage(
+		$args = [],
+		$assoc_args = [],
+	):void
+	{
+		// supported operating systems for "du" command.
+	    $supported_systems = [
+			'Darwin', // macOS
+			'Linux',
+			'FreeBSD',
+		];
+
+		$os = php_uname(
+			mode: 's',
+		);
+		if ( ! in_array ( needle: $os, haystack: $supported_systems ) ) {
+			WP_CLI::error(
+				message: sprintf( '"%1$s" is not a supported OS for this command.',
+					$os,
+				),
+			);
+		}
+		$uploads = wp_upload_dir(
+			create_dir: false,
+		);
+		$core_directories_default = [
+			// plugins.
+			basename( path: WP_PLUGIN_DIR ),
+			// themes.
+			basename( path: dirname( get_stylesheet_directory() ) ),
+			// uploads.
+			basename( path: $uploads['basedir'] ?? 'uploads' ),
+			// mu-plugins.
+			basename( path: WPMU_PLUGIN_DIR ),
+		];
+		$wp_content_subdirectories = $this->_get_subdirectory_disk_usage( directory: WP_CONTENT_DIR );
+		$subdirectories_array = [];
+		// reformat array from "0 => 3M\t/path/to/dir" to "/path/to/dir => 3M".
+		array_map(
+			function ( $subdirectory_entry ) use ( &$subdirectories_array ) {
+				list( $size, $directory ) = explode(
+					separator: "\t",
+					string: $subdirectory_entry
+				);
+				$subdirectories_array[$directory] = trim( $size );
+			},
+			$wp_content_subdirectories,
+		);
+		// filter out non-directories.
+		$subdirectories_array = array_filter(
+			$subdirectories_array,
+			function ( $size, $maybe_subdirectory ){
+				return is_dir( filename: $maybe_subdirectory ) ;
+			},
+			ARRAY_FILTER_USE_BOTH
+		);
+		// filter out empty directories.
+		$subdirectories_array = array_filter(
+			$subdirectories_array,
+			function ( $size, $subdirectory ) {
+				return $size != '0'; // zero bytes.
+			},
+			ARRAY_FILTER_USE_BOTH
+		);
+		// sort the array in descending order based on the key's value.
+		arsort(
+			array: $subdirectories_array,
+			flags: SORT_NUMERIC
+		);
+		// find core directories.
+		$core_directories = array_filter(
+			$subdirectories_array,
+			function( $size, $subdirectory ) use ( $core_directories_default ) {
+				return in_array( needle: basename( $subdirectory ), haystack: $core_directories_default );
+			},
+			ARRAY_FILTER_USE_BOTH
+		);
+		// find non-core directories.
+		$other_directories = array_filter(
+			$subdirectories_array,
+			function( $size, $subdirectory ) use ( $core_directories_default ) {
+				return ! in_array( needle: basename( $subdirectory ), haystack: $core_directories_default );
+			},
+			ARRAY_FILTER_USE_BOTH
+		);
+		$message = [];
+		$message[] = '';
+		$core_directories_formatted = array_map(
+			function ( $directory, $size ) use ( $os ) {
+				return sprintf('%1$s: %2$s',
+					basename(
+						path: $directory,
+					),
+					$this->_reformat_size_format(
+						size: $size,
+						os: $os,
+					),
+				);
+			},
+			array_keys( $core_directories ),
+			array_values( $core_directories ),
+		);
+		if ( $core_directories_formatted ) {
+			$core_label = __( text: 'Core Directories' );
+			$message[] = $core_label;
+			$message[] = str_repeat(
+				string:'-',
+				times: strlen( string: $core_label ),
+			);
+			$message = array_merge( $message, $core_directories_formatted, );
+		} else {
+			WP_CLI::error(
+				message: 'The "du" command was not found or could not be run.',
+			);
+		}
+		$other_directories_formatted = array_map(
+			function ( $directory, $size ) use ( $os ) {
+				return sprintf('%1$s: %2$s',
+					basename(
+						path: $directory,
+					),
+					$this->_reformat_size_format(
+						size: $size,
+						os: $os,
+					),
+				);
+			},
+			array_keys( $other_directories ),
+			array_values( $other_directories ),
+		);
+		if ( $other_directories_formatted ) {
+			$message[] = '';
+			$other_label = __( text: 'Other Directories' );
+			$message[] = $other_label;
+			$message[] = str_repeat(
+				string:'-',
+				times: strlen( string: $other_label ),
+			);
+			$message = array_merge( $message, $other_directories_formatted, );
+		}
+		// sum the total.
+		$total_bytes = 0;
+		array_map(
+			callback: function ( $subdirectory_size ) use ( &$total_bytes ) {
+				$total_bytes += $subdirectory_size;
+			},
+			array: $subdirectories_array,
+		);
+		$message[] = '';
+		$message[] = sprintf( '%1$s: %2$s',
+			__( text: 'Total disk usage in' ) . ' ' . basename( path: WP_CONTENT_DIR ),
+			$this->_reformat_size_format(
+				size: $total_bytes,
+				decimals: 2,
+				os: $os,
+			),
+		);
+		$message[] = '';
+		WP_CLI::log(
+			message: implode(
+				separator: PHP_EOL,
+				array: $message,
+			),
+		);
+	}
+
+	/**
 	 * Create a MySQL dump of the database.
 	 *
 	 * @param string $file
@@ -1489,5 +1666,71 @@ final class cli {
 				return_code: 1,
 			);
 		}
+	}
+
+	/**
+	 * Get the disk usage of the subdirectories of a given directory.
+	 *
+	 * @param string $directory
+	 *
+	 * @return array
+	 */
+	private function _get_subdirectory_disk_usage(
+		string $directory,
+	):array
+	{
+		$command = 'du';
+		$arguments = [
+			's', // summary.
+		];
+		if ( file_exists( filename: $directory ) ) {
+			$exec = exec(
+				command: sprintf('%1$s -%2$s %3$s/*',
+					$command,
+					implode( $arguments ),
+					$directory,
+				),
+				output: $output,
+			);
+			// no output, or the "du" command is not found.
+			if ( empty( $exec )) {
+				return [];
+			}
+			return $output;
+		}
+		return [];
+	}
+
+	/**
+	 * Reformat the return value of size_format(). Example: "5 MB" => "5M".
+	 *
+	 * @param string $size
+	 * @param int $decimals
+	 * @param string $os
+	 *
+	 * @return string
+	 */
+	private function _reformat_size_format(
+		string $size,
+		int $decimals = 0,
+		string $os = '',
+	):string
+	{
+		// we can't get the directory in bytes on macOS. see the "du" man page.
+		$du_multiplier = 1024;
+		if ( $os == 'Darwin' ) {
+			$du_multiplier = 512;
+		}
+		list ( $amount, $unit ) = explode(
+			separator: ' ',
+			string: size_format(
+				bytes: $size * $du_multiplier,
+				decimals: $decimals,
+			)
+		);
+		return sprintf('%1$s%2$s',
+			$amount,
+			$unit[0], // get first character.
+		);
 	}
 }
