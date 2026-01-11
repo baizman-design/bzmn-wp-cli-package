@@ -1129,7 +1129,7 @@ final class cli {
 	}
 
 	/**
-	 * Display the disk usage of wp-content.
+	 * Display the disk usage of WP_CONTENT_DIR.
 	 *
 	 * ## EXAMPLES
 	 *
