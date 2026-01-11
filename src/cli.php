@@ -1144,13 +1144,18 @@ final class cli {
 		$assoc_args = [],
 	):void
 	{
+		// section labels.
+		$core_label = __( text: 'Core Directories' );
+		$other_label = __( text: 'Other Directories' );
+		$total_label = __( text: 'Totals' );
+
 		// supported operating systems for "du" command.
 	    $supported_systems = [
 			'Darwin', // macOS
 			'Linux',
 			'FreeBSD',
 		];
-
+		// get this operating system.
 		$os = php_uname(
 			mode: 's',
 		);
@@ -1174,14 +1179,16 @@ final class cli {
 			// mu-plugins.
 			basename( path: WPMU_PLUGIN_DIR ),
 		];
-		$wp_content_subdirectories = $this->_get_subdirectory_disk_usage( directory: WP_CONTENT_DIR );
+		$wp_content_subdirectories = $this->_get_subdirectory_disk_usage(
+			directory: WP_CONTENT_DIR,
+		);
 		$subdirectories_array = [];
 		// reformat array from "0 => 3M\t/path/to/dir" to "/path/to/dir => 3M".
 		array_map(
 			function ( $subdirectory_entry ) use ( &$subdirectories_array ) {
 				list( $size, $directory ) = explode(
 					separator: "\t",
-					string: $subdirectory_entry
+					string: $subdirectory_entry,
 				);
 				$subdirectories_array[$directory] = trim( $size );
 			},
@@ -1189,65 +1196,62 @@ final class cli {
 		);
 		// filter out non-directories.
 		$subdirectories_array = array_filter(
-			$subdirectories_array,
-			function ( $size, $maybe_subdirectory ){
-				return is_dir( filename: $maybe_subdirectory ) ;
+			array: $subdirectories_array,
+			callback: function ( $size, $maybe_subdirectory ){
+				return is_dir( filename: $maybe_subdirectory );
 			},
-			ARRAY_FILTER_USE_BOTH
+			mode: ARRAY_FILTER_USE_BOTH,
 		);
 		// filter out empty directories.
 		$subdirectories_array = array_filter(
-			$subdirectories_array,
-			function ( $size, $subdirectory ) {
+			array: $subdirectories_array,
+			callback: function ( $size, $subdirectory ) {
 				return $size != '0'; // zero bytes.
 			},
-			ARRAY_FILTER_USE_BOTH
+			mode: ARRAY_FILTER_USE_BOTH,
 		);
 		// sort the array in descending order based on the key's value.
 		arsort(
 			array: $subdirectories_array,
-			flags: SORT_NUMERIC
+			flags: SORT_NUMERIC,
 		);
 		// find core directories.
 		$core_directories = array_filter(
-			$subdirectories_array,
-			function( $size, $subdirectory ) use ( $core_directories_default ) {
-				return in_array( needle: basename( $subdirectory ), haystack: $core_directories_default );
+			array: $subdirectories_array,
+			callback: function( $size, $subdirectory ) use ( $core_directories_default ) {
+				return in_array( needle: basename( path: $subdirectory ), haystack: $core_directories_default );
 			},
-			ARRAY_FILTER_USE_BOTH
+			mode: ARRAY_FILTER_USE_BOTH,
 		);
 		// find non-core directories.
 		$other_directories = array_filter(
-			$subdirectories_array,
-			function( $size, $subdirectory ) use ( $core_directories_default ) {
-				return ! in_array( needle: basename( $subdirectory ), haystack: $core_directories_default );
+			array: $subdirectories_array,
+			callback: function( $size, $subdirectory ) use ( $core_directories_default ) {
+				return ! in_array( needle: basename( path: $subdirectory ), haystack: $core_directories_default );
 			},
-			ARRAY_FILTER_USE_BOTH
+			mode: ARRAY_FILTER_USE_BOTH,
 		);
-		WP_CLI::log('');
 		$core_directories_formatted = array_map(
-			function ( $directory, $size ) use ( $os ) {
+			function ( $directory, $size ) use ( $os, $core_label ) {
 				return [
-					'directory' => basename(
+					$core_label => basename(
 						path: $directory,
 					),
-					'size' => $this->_reformat_size_format(
+					'Size' => $this->_reformat_size_format(
 						size: $size,
 						os: $os,
-					)
+					),
 				];
 			},
-			array_keys( $core_directories ),
-			array_values( $core_directories ),
+			array_keys( array: $core_directories ),
+			array_values( array: $core_directories ),
 		);
 		if ( $core_directories_formatted ) {
-			$core_label = __( text: 'Core Directories' );
-			WP_CLI::log( $core_label );
 			$totals[] = [
-				'directory' => 'core directories subtotal',
-				'size' => $this->_reformat_size_format(
-						size: array_sum(
-							array: $core_directories,
+				$total_label => 'Core directories subtotal',
+				'Size' => $this->_reformat_size_format(
+					size: array_sum(
+						array: $core_directories,
 					),
 					os: $os,
 				),
@@ -1255,7 +1259,7 @@ final class cli {
 			WP_CLI\Utils\format_items(
 				format: 'table',
 				items: $core_directories_formatted,
-				fields: array_keys( $core_directories_formatted[0] ),
+				fields: array_keys( array: $core_directories_formatted[0] ),
 			);
 		} else {
 			WP_CLI::error(
@@ -1263,28 +1267,25 @@ final class cli {
 			);
 		}
 		$other_directories_formatted = array_map(
-			function ( $directory, $size ) use ( $os ) {
+			function ( $directory, $size ) use ( $os, $other_label ) {
 				return [
-					'directory' => basename(
+					$other_label => basename(
 						path: $directory,
 					),
-					'size' => $this->_reformat_size_format(
+					'Size' => $this->_reformat_size_format(
 						size: $size,
 						os: $os,
-					)
+					),
 				];
 			},
-			array_keys( $other_directories ),
-			array_values( $other_directories ),
+			array_keys( array: $other_directories ),
+			array_values( array: $other_directories ),
 		);
 		if ( $other_directories_formatted ) {
-			WP_CLI::log('');
-			$other_label = __( text: 'Other Directories' );
-			WP_CLI::log( $other_label );
 			$totals[] = [
-				'directory' => 'other directories subtotal',
-				'size' => $this->_reformat_size_format(
-						size: array_sum(
+				$total_label => 'Other directories subtotal',
+				'Size' => $this->_reformat_size_format(
+					size: array_sum(
 						array: $other_directories,
 					),
 					os: $os,
@@ -1293,16 +1294,15 @@ final class cli {
 			WP_CLI\Utils\format_items(
 				format: 'table',
 				items: $other_directories_formatted,
-				fields: array_keys( $other_directories_formatted[0] ),
+				fields: array_keys( array: $other_directories_formatted[0] ),
 			);
 		}
 		// sum the total.
-		WP_CLI::log('');
-		$total_label = __( text: 'Totals' );
-		WP_CLI::log( $total_label );
 		$totals[] = [
-			'directory' => basename( path: WP_CONTENT_DIR ) . ' total',
-			'size' => $this->_reformat_size_format(
+			$total_label => sprintf('Sum total in "%1$s"',
+				basename( path: WP_CONTENT_DIR ),
+			),
+			'Size' => $this->_reformat_size_format(
 				size: array_sum(
 					array: $subdirectories_array,
 				),
@@ -1313,9 +1313,8 @@ final class cli {
 		WP_CLI\Utils\format_items(
 			format: 'table',
 			items: $totals,
-			fields: array_keys( $totals[0] ),
+			fields: array_keys( array: $totals[0] ),
 		);
-		WP_CLI::log('');
 	}
 
 	/**
