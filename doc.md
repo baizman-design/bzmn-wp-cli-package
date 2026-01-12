@@ -110,16 +110,27 @@ wp bzmn delete-woocommerce-transients
 
 ### wp bzmn disk-usage
 
-Display the disk usage of wp-content.
+Display the disk usage of WP_CONTENT_DIR.
 
 ~~~
-wp bzmn disk-usage 
+wp bzmn disk-usage [--sort-by=<field>]
 ~~~
+
+**OPTIONS**
+
+	[--sort-by=<field>]
+		Sort directories in each subsection alphabetically or by size. Options: name, size. Default: name.
+		---
+		default: name
+		options:
+		  - name
+		  - size
 
 **EXAMPLES**
 
     # Display the disk usage.
     wp bzmn disk-usage
+    wp bzmn disk-usage --sort-by=size
 
 
 
@@ -187,7 +198,7 @@ If the field is not present, the field and value will be added.
 Print custom post types.
 
 ~~~
-wp bzmn print-custom-post-types [--format=<format>] [--sort_by=<field>] [--include_builtins]
+wp bzmn print-custom-post-types [--format=<format>] [--sort-by=<field>] [--include_builtins]
 ~~~
 
 **OPTIONS**
@@ -202,7 +213,7 @@ wp bzmn print-custom-post-types [--format=<format>] [--sort_by=<field>] [--inclu
 		  - csv
 		  - yaml
 
-	[--sort_by=<field>]
+	[--sort-by=<field>]
 		Sort results. Options: name, slug. Default: name.
 		---
 		default: name
@@ -219,13 +230,13 @@ wp bzmn print-custom-post-types [--format=<format>] [--sort_by=<field>] [--inclu
     wp bzmn print-custom-post-types
 
     # Print the custom post types sorted alphabetically by slug.
-    wp bzmn print-custom-post-types --sort_by=slug
+    wp bzmn print-custom-post-types --sort-by=slug
 
     # Print the custom and built-in post types.
     wp bzmn print-custom-post-types --include_builtins
 
     # Print the custom and built-in post types sorted alphabetically by slug.
-    wp bzmn print-custom-post-types --include_builtins --sort_by=slug
+    wp bzmn print-custom-post-types --include_builtins --sort-by=slug
 
 
 
