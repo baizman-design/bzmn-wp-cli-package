@@ -1131,10 +1131,21 @@ final class cli {
 	/**
 	 * Display the disk usage of WP_CONTENT_DIR.
 	 *
+	 * ## OPTIONS
+	 *
+	 * [--sort-by=<field>]
+	 * : Sort directories in each subsection alphabetically or by size. Options: name, size. Default: name.
+	 * ---
+	 * default: name
+	 * options:
+	 *   - name
+	 *   - size
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     # Display the disk usage.
 	 *     wp bzmn disk-usage
+	 *     wp bzmn disk-usage --sort-by=size
 	 *
 	 * @subcommand disk-usage
 	 * @alias du
@@ -1144,11 +1155,15 @@ final class cli {
 		$assoc_args = [],
 	):void
 	{
+		$sort_by = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'sort-by',
+			default: 'name', // directory name.
+		);
 		// section labels.
 		$core_label = __( text: 'Core Directories' );
 		$other_label = __( text: 'Other Directories' );
 		$total_label = __( text: 'Totals' );
-
 		// supported operating systems for "du" command.
 	    $supported_systems = [
 			'Darwin', // macOS
@@ -1210,11 +1225,13 @@ final class cli {
 			},
 			mode: ARRAY_FILTER_USE_BOTH,
 		);
-		// sort the array in descending order based on the key's value.
-		arsort(
-			array: $subdirectories_array,
-			flags: SORT_NUMERIC,
-		);
+		// if "--sort-by=size," sort the array in descending order based on the key's value.
+		if ( $sort_by == 'size' ) {
+			arsort(
+				array: $subdirectories_array,
+				flags: SORT_NUMERIC,
+			);
+		}
 		// find core directories.
 		$core_directories = array_filter(
 			array: $subdirectories_array,
