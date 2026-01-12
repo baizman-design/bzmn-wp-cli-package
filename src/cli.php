@@ -206,7 +206,7 @@ final class cli {
 	 *   - csv
 	 *   - yaml
 	 *
-	 * [--sort_by=<field>]
+	 * [--sort-by=<field>]
 	 * : Sort results. Options: name, slug. Default: name.
 	 * ---
 	 * default: name
@@ -223,13 +223,13 @@ final class cli {
 	 *     wp bzmn print-custom-post-types
 	 *
 	 *     # Print the custom post types sorted alphabetically by slug.
-	 *     wp bzmn print-custom-post-types --sort_by=slug
+	 *     wp bzmn print-custom-post-types --sort-by=slug
 	 *
 	 *     # Print the custom and built-in post types.
 	 *     wp bzmn print-custom-post-types --include_builtins
 	 *
 	 *     # Print the custom and built-in post types sorted alphabetically by slug.
-	 *     wp bzmn print-custom-post-types --include_builtins --sort_by=slug
+	 *     wp bzmn print-custom-post-types --include_builtins --sort-by=slug
 	 *
 	 * @subcommand print-custom-post-types
 	 * @alias print_custom_post_types
@@ -251,7 +251,7 @@ final class cli {
 		);
 		$sort_by = WP_CLI\Utils\get_flag_value(
 			assoc_args: $assoc_args,
-			flag: 'sort_by',
+			flag: 'sort-by',
 			default: 'name', // post type label. corresponds to custom array in $post_types.
 		);
 		$get_post_types_args = [];
