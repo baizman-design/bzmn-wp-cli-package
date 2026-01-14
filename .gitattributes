@@ -27,9 +27,10 @@ LICENSE.md export-ignore
 .phpcs.xml.dist export-ignore
 
 # binaries
-bin
+bin export-ignore
 
 # wp cli config
-wp-cli.yml
+wp-cli.yml export-ignore
+
 # additional documentation directory
 doc-partials export-ignore
