@@ -3,8 +3,10 @@
 name: regenerate doc.md
 on:
   workflow_run:
-    workflows: [ "update commands section in composer.json" ]
-    types: [completed]
+    workflows:
+      - "update commands section in composer.json"
+    types:
+      - completed
   # run this workflow manually
   workflow_dispatch:
 
