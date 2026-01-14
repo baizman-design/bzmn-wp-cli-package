@@ -28,3 +28,6 @@ LICENSE.md export-ignore
 
 # binaries
 bin
+
+# wp cli config
+wp-cli.yml

@@ -29,10 +29,9 @@ jobs:
     steps:
       - name: check out the repository
         uses: actions/checkout@v4
-      - name: install the custom command and generate the markdown documentation
+      - name: generate the command's documentation
         run: >
-          wp package install ${GITHUB_WORKSPACE};
-          wp package list;
+          composer dump-autoload;
           mv -v ${README} ${README}.bak;
           wp scaffold package-readme --branch=${{ github.event.repository.default_branch }} --force .;
           mv -v ${README} ${DOC};
