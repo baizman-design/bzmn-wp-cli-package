@@ -1,6 +1,7 @@
-# a new command has to be added to composer.json for it to be included in doc.md.
+# a new command has to be added to composer.json for it to be included in README.md.
+# (note: updating composer.json has been automated via update-composer-json-commands.yml.)
 
-name: regenerate doc.md
+name: regenerate README.md
 on:
   workflow_run:
     workflows:
@@ -11,7 +12,6 @@ on:
   workflow_dispatch:
 
 env:
-  DOC: doc.md
   README: README.md
   WP_CLI_PACKAGES_DIR: /root/.wp-cli/packages
 
@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   regenerate-readme:
-    name: Regenerate doc.md and commit it back to the repository
+    name: Regenerate README.md and commit it back to the repository
     runs-on: ubuntu-latest
     timeout-minutes: 3
     container:
@@ -34,10 +34,7 @@ jobs:
       - name: generate the command's documentation
         run: >
           composer dump-autoload;
-          mv -v ${README} ${README}.bak;
           wp scaffold package-readme --branch=${{ github.event.repository.default_branch }} --force .;
-          mv -v ${README} ${DOC};
-          mv -v ${README}.bak ${README}
       - name: commit documentation, if needed
         run: >
           git config --global --add safe.directory '*';
@@ -48,12 +45,12 @@ jobs:
           if [ $? -eq 1 ];
           then
           set -e;
-          added="$(git diff --numstat ${DOC} | awk '{print $1}')";
+          added="$(git diff --numstat ${README} | awk '{print $1}')";
           echo "lines added: ${added:-0}" | tee -a ${GITHUB_STEP_SUMMARY};
-          deleted="$(git diff --numstat ${DOC} | awk '{print $2}')";
+          deleted="$(git diff --numstat ${README} | awk '{print $2}')";
           echo "lines deleted: ${deleted:-0}" | tee -a ${GITHUB_STEP_SUMMARY};
-          git add ${DOC};
-          git commit -m "Updated ${DOC} via GHA.";
+          git add ${README};
+          git commit -m "Updated ${README} via GHA.";
           git push;
           echo "changes were successfully committed to the repository." | tee -a ${GITHUB_STEP_SUMMARY};
           else

@@ -31,3 +31,5 @@ bin
 
 # wp cli config
 wp-cli.yml
+# additional documentation directory
+doc-partials export-ignore

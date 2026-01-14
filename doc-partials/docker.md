@@ -1,0 +1,1 @@
+The `Dockerfile` creates a custom image with the [`wp scaffold package`](https://developer.wordpress.org/cli/commands/scaffold/package/) command pre-installed. The image is used with the `regenerate-documentation.yml` GitHub Action to automatically generate the command documentation. To build the Docker image locally, run `bin/local-dev.sh`.

@@ -54,8 +54,20 @@
         ],
         "readme": {
             "sections": [
-                "Using"
+                "installation",
+                "docker",
+                "automation",
+                "using"
             ],
+            "installation": {
+                "body": "doc-partials/installation.md"
+            },
+            "docker": {
+                "body": "doc-partials/docker.md"
+            },
+            "automation": {
+                "body": "doc-partials/github-actions.md"
+            },
             "show_powered_by": false
         }
     }
