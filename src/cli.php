@@ -1181,16 +1181,14 @@ final class cli {
 				),
 			);
 		}
-		$uploads = wp_upload_dir(
-			create_dir: false,
-		);
+		$uploads = wp_get_upload_dir()['basedir'] ?? 'uploads';
 		$core_directories_default = [
 			// plugins.
 			basename( path: WP_PLUGIN_DIR ),
 			// themes.
 			basename( path: dirname( get_stylesheet_directory() ) ),
 			// uploads.
-			basename( path: $uploads['basedir'] ?? 'uploads' ),
+			basename( path: $uploads ),
 			// mu-plugins.
 			basename( path: WPMU_PLUGIN_DIR ),
 		];
