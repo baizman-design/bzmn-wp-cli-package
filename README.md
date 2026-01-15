@@ -349,7 +349,7 @@ Displays the value of the WP_ENVIRONMENT_TYPE constant.
 
 ### wp bzmn restore
 
-Restore WP instance from ai1wm backup.
+Restore WP instance from All-in-One WP Migration and Backup .wpress file.
 
 ~~~
 wp bzmn restore <wpress_backup_file>
