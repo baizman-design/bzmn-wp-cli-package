@@ -790,7 +790,7 @@ final class cli {
 	}
 
 	/**
-	 * Restore WP instance from ai1wm backup.
+	 * Restore WP instance from All-in-One WP Migration and Backup .wpress file.
 	 *
 	 * ## OPTIONS
 	 *
