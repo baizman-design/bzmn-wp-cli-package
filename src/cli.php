@@ -1254,6 +1254,7 @@ final class cli {
 					),
 					'Size' => $this->_reformat_size_format(
 						size: $size,
+						decimals: 1,
 						os: $os,
 					),
 				];
@@ -1268,7 +1269,7 @@ final class cli {
 					size: array_sum(
 						array: $core_directories,
 					),
-					decimals: 2,
+					decimals: 1,
 					os: $os,
 				),
 			];
@@ -1290,6 +1291,7 @@ final class cli {
 					),
 					'Size' => $this->_reformat_size_format(
 						size: $size,
+						decimals: 1,
 						os: $os,
 					),
 				];
@@ -1304,7 +1306,7 @@ final class cli {
 					size: array_sum(
 						array: $other_directories,
 					),
-					decimals: 2,
+					decimals: 1,
 					os: $os,
 				),
 			];
@@ -1323,7 +1325,7 @@ final class cli {
 				size: array_sum(
 					array: $subdirectories_array,
 				),
-				decimals: 2,
+				decimals: 1,
 				os: $os,
 			),
 		];
