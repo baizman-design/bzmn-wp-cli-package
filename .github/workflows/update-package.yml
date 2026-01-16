@@ -4,6 +4,11 @@
 
 name: update bzmn wp cli package on remote hosts
 on:
+  workflow_run:
+    workflows:
+      - "regenerate README.md"
+    types:
+      - completed
   # run this workflow manually
   workflow_dispatch:
 
@@ -31,7 +36,7 @@ jobs:
           remote_hosts="${{ env.repo_remote_hosts }}";
           for remote_host in ${remote_hosts//$'\r'/''};
           do
-          echo "ssh ${remote_host} wp package update" | tee -a ${{ env.logfile }};
+          echo "ssh -o LogLevel=ERROR ${remote_host} wp package update" | tee -a ${{ env.logfile }};
           ssh -o LogLevel=ERROR ${remote_host} wp package update | tee -a ${{ env.logfile }};
           done;
           cat ${{ env.logfile }} >> ${GITHUB_STEP_SUMMARY};
