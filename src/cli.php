@@ -1268,6 +1268,7 @@ final class cli {
 					size: array_sum(
 						array: $core_directories,
 					),
+					decimals: 2,
 					os: $os,
 				),
 			];
@@ -1303,6 +1304,7 @@ final class cli {
 					size: array_sum(
 						array: $other_directories,
 					),
+					decimals: 2,
 					os: $os,
 				),
 			];
