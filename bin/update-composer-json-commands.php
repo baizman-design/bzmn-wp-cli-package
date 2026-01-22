@@ -146,7 +146,12 @@ if ( ! file_put_contents(
 	);
 }
 // success. exit 0.
-exit( 0 );
+_die(
+	message: sprintf( 'Successfully updated "%1$s".',
+		$composer,
+	),
+	exit_code: 0,
+);
 
 /**
  * Debug print.
@@ -175,6 +180,14 @@ function _debug(
 	}
 }
 
+/**
+ * Quit the program via outputting a message and exiting with a status code (default: 1).
+ *
+ * @param string $message
+ * @param int $exit_code
+ *
+ * @return void
+ */
 function _die (
 	string $message,
 	int $exit_code = 1,
