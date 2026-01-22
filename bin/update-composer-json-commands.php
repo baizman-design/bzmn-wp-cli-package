@@ -23,11 +23,19 @@ $debugging_flags = [
 	'-d',
 	'--debug',
 ];
+$force_flags = [
+	'-f',
+	'--force',
+];
 
 $debug = false;
+$force = false;
 
-if ( isset( $argv[1] ) && in_array( needle: $argv[1], haystack: $debugging_flags ) ) {
+if ( isset( $argv ) && array_intersect( $argv, $debugging_flags ) ) {
 	$debug = true;
+}
+if ( isset( $argv ) && array_intersect( $argv, $force_flags ) ) {
+	$force = true;
 }
 
 _debug(
@@ -70,11 +78,11 @@ _debug(
 	label: '$public_methods',
 );
 
-// convert method names to command names. replace "-" with "_".
 $method_name_replacements = [
 	'_' => '-',
 ];
-$command_names = array_map(
+// convert method names to command names. replace "-" with "_".
+$reflection_command_names = array_map(
 	callback: fn( $method ) => sprintf( '%1$s %2$s',
 		$command_name,
 		strtr( $method->getName(), $method_name_replacements ),
@@ -84,12 +92,12 @@ $command_names = array_map(
 
 // alphabetize the commands.
 sort(
-	array: $command_names,
+	array: $reflection_command_names,
 );
 
 _debug(
-	data: $command_names,
-	label: '$command_names',
+	data: $reflection_command_names,
+	label: '$reflection_command_names',
 );
 
 // get composer file data.
@@ -115,8 +123,20 @@ _debug(
 	label: '$composer_data (before)',
 );
 
+// skip if we're forcing it.
+if ( ! $force ) {
+	// have there been any changes? if not, quit.
+	if ( ! array_diff( $reflection_command_names, $composer_data->extra->commands ) ) {
+		_die(
+			message: sprintf( 'There are no new public methods in "%1$s". Aborting.',
+				$command_path,
+			),
+			exit_code: 0,
+		);
+	}
+}
 // redefine "commands" section.
-$composer_data->extra->commands = $command_names;
+$composer_data->extra->commands = $reflection_command_names;
 
 _debug(
 	data: $composer_data,
@@ -146,8 +166,13 @@ if ( ! file_put_contents(
 	);
 }
 // success. exit 0.
+$success_message = 'Successfully updated';
+if ( $force ) {
+	$success_message .= ' (by force)';
+}
 _die(
-	message: sprintf( 'Successfully updated "%1$s".',
+	message: sprintf( '%1$s "%2$s".',
+		$success_message,
 		$composer,
 	),
 	exit_code: 0,
@@ -189,10 +214,12 @@ function _debug(
  * @return void
  */
 function _die (
-	string $message,
+	string $message = '',
 	int $exit_code = 1,
 ):void
 {
-	print( $message . PHP_EOL );
+	// append newline.
+	$message .= PHP_EOL;
+	print( $message );
 	exit( $exit_code );
 }
