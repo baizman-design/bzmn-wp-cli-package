@@ -10,7 +10,9 @@ use ReflectionClass;
 use ReflectionMethod;
 
 $command_name = 'bzmn';
-$grandparent_directory = dirname( __DIR__ );
+$grandparent_directory = dirname(
+	path: __DIR__,
+);
 $command_path = sprintf( '%1$s/src/cli.php',
 	$grandparent_directory,
 );
@@ -24,34 +26,38 @@ $debugging_flags = [
 
 $debug = false;
 
-if ( isset( $argv[1] ) && in_array( $argv[1], $debugging_flags ) ) {
+if ( isset( $argv[1] ) && in_array( needle: $argv[1], haystack: $debugging_flags ) ) {
 	$debug = true;
 }
 
-dprint(
+_debug(
 	data: $command_name,
 	label: '$command_name',
 );
 
-dprint(
+_debug(
 	data: $command_path,
 	label: '$command_path',
 );
 
-dprint(
+_debug(
 	data: $composer,
 	label: '$composer',
 );
 
-if ( file_exists( $command_path ) ) {
+if ( file_exists( filename: $command_path ) ) {
 	require_once $command_path;
 } else {
-	exit( 1 );
+	_die(
+		message: sprintf( 'Could not load command file "%1$s".',
+			$command_path,
+		),
+	);
 }
 
 $reflection_object = new ReflectionClass( objectOrClass: cli::class );
 
-dprint(
+_debug(
 	data: $reflection_object,
 	label: '$reflection_object',
 );
@@ -59,37 +65,52 @@ dprint(
 // retrieve public methods.
 $public_methods = $reflection_object->getMethods( filter: ReflectionMethod::IS_PUBLIC );
 
-dprint(
+_debug(
 	data: $public_methods,
 	label: '$public_methods',
 );
 
-// convert method names to command names.
-// replace "-" with "_".
+// convert method names to command names. replace "-" with "_".
+$method_name_replacements = [
+	'_' => '-',
+];
 $command_names = array_map(
-	callback: fn( $method ) => $command_name . ' ' . str_replace( search: '_', replace: '-', subject: $method->getName() ),
+	callback: fn( $method ) => sprintf( '%1$s %2$s',
+		$command_name,
+		strtr( $method->getName(), $method_name_replacements ),
+	),
 	array: $public_methods,
 );
 
 // alphabetize the commands.
-sort($command_names);
+sort(
+	array: $command_names,
+);
 
-dprint(
+_debug(
 	data: $command_names,
 	label: '$command_names',
 );
 
 // get composer file data.
 if ( ! $json = file_get_contents( $composer ) ) {
-	exit( 1 );
+	_die(
+		message: sprintf( 'Could not load Composer file "%1$s".',
+			$composer,
+		),
+	);
 }
 
 // convert json data into a PHP object.
 if ( ! $composer_data = json_decode( $json ) ) {
-	exit( 1 );
+	_die(
+		message: sprintf( 'Could not decode JSON: %1$s',
+			$json,
+		),
+	);
 }
 
-dprint(
+_debug(
 	data: $composer_data,
 	label: '$composer_data (before)',
 );
@@ -97,7 +118,7 @@ dprint(
 // redefine "commands" section.
 $composer_data->extra->commands = $command_names;
 
-dprint(
+_debug(
 	data: $composer_data,
 	label: '$composer_data (after)',
 );
@@ -107,7 +128,7 @@ $json_to_save = json_encode(
 	flags: JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES, // pretty print, and don't escape slashes.
 );
 
-dprint(
+_debug(
 	data: $json_to_save,
 	label: '$json_to_save',
 );
@@ -118,8 +139,13 @@ if ( ! file_put_contents(
 		data: $json_to_save,
 	)
 ) {
-	exit( 1 );
+	_die(
+		message: sprintf( 'Could not save updated JSON to Composer file "%1$s".',
+			$composer,
+		),
+	);
 }
+// success. exit 0.
 exit( 0 );
 
 /**
@@ -130,7 +156,7 @@ exit( 0 );
  *
  * @return void
  */
-function dprint(
+function _debug(
 	mixed $data,
 	string $label = '',
 ):void
@@ -147,4 +173,13 @@ function dprint(
 		);
 		echo PHP_EOL;
 	}
+}
+
+function _die (
+	string $message,
+	int $exit_code = 1,
+):void
+{
+	print( $message . PHP_EOL );
+	exit( $exit_code );
 }

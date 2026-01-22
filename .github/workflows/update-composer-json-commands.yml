@@ -27,7 +27,7 @@ jobs:
       - name: check php version
         run: php -v
       - name: run bin/update-composer-json-commands.php
-        run: php bin/update-composer-json-commands.php
+        run: php bin/update-composer-json-commands.php | tee -a ${GITHUB_STEP_SUMMARY}
       - name: commit composer.json, if needed
         run: >
           git config --global --add safe.directory '*';
