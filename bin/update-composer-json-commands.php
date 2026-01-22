@@ -34,9 +34,20 @@ $force = false;
 if ( isset( $argv ) && array_intersect( $argv, $debugging_flags ) ) {
 	$debug = true;
 }
+
+_debug(
+	data: $debug ? 'true' : 'false',
+	label: '$debug',
+);
+
 if ( isset( $argv ) && array_intersect( $argv, $force_flags ) ) {
 	$force = true;
 }
+
+_debug(
+	data: $force ? 'true' : 'false',
+	label: '$force',
+);
 
 _debug(
 	data: $command_name,
