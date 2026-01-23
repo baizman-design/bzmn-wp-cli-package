@@ -53,9 +53,11 @@ final class cli {
 			default: false,
 		);
 		flush_rewrite_rules( hard: $hard );
-		WP_CLI::success ( sprintf( 'The rewrite rules have been %1$s-flushed.',
-			$hard ? 'hard' : 'soft',
-		));
+		WP_CLI::success (
+			message: sprintf( 'The rewrite rules have been %1$s-flushed.',
+				$hard ? 'hard' : 'soft',
+			),
+		);
 	}
 
 	/**
@@ -92,10 +94,12 @@ final class cli {
 			default: false,
 		);
 		$prefix = $porcelain ? '' : 'environment: ';
-		WP_CLI::log( sprintf( '%1$s%2$s',
-			$prefix,
-			wp_get_environment_type(),
-		));
+		WP_CLI::log(
+			message: sprintf( '%1$s%2$s',
+				$prefix,
+				wp_get_environment_type(),
+			),
+		);
 	}
 
     /**
@@ -364,12 +368,16 @@ final class cli {
 					));
 				}
 			} else {
-				WP_CLI::error( sprintf( 'The user "%1$s" is not a valid user.',
-					$email,
-				));
+				WP_CLI::error(
+					message: sprintf( 'The user "%1$s" is not a valid user.',
+						$email,
+					),
+				);
 			}
 		} else {
-			WP_CLI::error( 'The arguments were not valid.' );
+			WP_CLI::error(
+				message: 'The arguments were not valid.',
+			);
 		}
 	}
 
@@ -416,7 +424,9 @@ final class cli {
 				);
 			}
 		);
-        WP_CLI::success( 'Deleted WooCommerce payment field style transients.' );
+        WP_CLI::success(
+			message: 'Deleted WooCommerce payment field style transients.',
+        );
     }
 
 	/**
@@ -503,19 +513,25 @@ final class cli {
 				$post_counter++;
 			}
 			if ( ! $this->dry_run ) {
-				WP_CLI::success( sprintf( '%1$d posts were updated.',
-					$post_counter-1,
-				));
+				WP_CLI::success(
+					message: sprintf( '%1$d posts were updated.',
+						$post_counter-1,
+					),
+				);
 			} else {
-				WP_CLI::log( sprintf( '%1$d posts were not updated.',
-					$post_counter-1,
-				));
+				WP_CLI::log(
+					message: sprintf( '%1$d posts were not updated.',
+						$post_counter-1,
+					),
+				);
 			}
 		} else {
 			// zero posts found.
-			WP_CLI::error(sprintf('There were no posts for the post type "%1$s."',
-				$post_type,
-			));
+			WP_CLI::error(
+				message: sprintf('There were no posts for the post type "%1$s."',
+					$post_type,
+				),
+			);
 		}
 	}
 
@@ -538,8 +554,9 @@ final class cli {
 	 */
 	public function toggle_debug():void
 	{
-		$constant = 'WP_DEBUG';
-		$this->set_config_file_value( constant: $constant );
+		$this->set_config_file_value(
+			constant: 'WP_DEBUG',
+		);
 	}
 
 	/**
@@ -561,8 +578,9 @@ final class cli {
 	 */
 	public function toggle_debug_display():void
 	{
-		$constant = 'WP_DEBUG_DISPLAY';
-		$this->set_config_file_value( constant: $constant );
+		$this->set_config_file_value(
+			constant: 'WP_DEBUG_DISPLAY',
+		);
 	}
 
 	/**
@@ -616,7 +634,7 @@ final class cli {
 			WP_CLI::success(
 				message: sprintf('%1$s backup succeeded.',
 					ucfirst( $type ),
-				)
+				),
 			);
 			// we're done here.
 			WP_CLI::halt(
@@ -633,7 +651,7 @@ final class cli {
 				message: sprintf( '%1$s is active: %2$s',
 					$plugin,
 					$is_plugin_active ? 'true' : 'false',
-				)
+				),
 			);
 			if ( ! $is_plugin_active ) {
 				$plugins_need_to_be_activated = true;
@@ -643,7 +661,7 @@ final class cli {
 		WP_CLI::debug(
 			message: sprintf( '$plugins_need_to_be_activated: %1$s',
 				$plugins_need_to_be_activated ? 'true' : 'false',
-			)
+			),
 		);
 		$wp_path = WP_CLI::get_config(
 			key: 'path',
@@ -698,7 +716,7 @@ final class cli {
 			WP_CLI::log(
 				message: sprintf( '%1$s',
 					$plugin_activate_message->stdout,
-				)
+				),
 			);
 		} else {
 			WP_CLI::warning(
@@ -707,7 +725,7 @@ final class cli {
 						separator: ' and ',
 						array: $ai1wm_plugins,
 					),
-				)
+				),
 			);
 		}
 		$ai1wm_command_arguments = '';
@@ -720,12 +738,12 @@ final class cli {
 		WP_CLI::log(
 			message: sprintf( 'Backup type: %1$s',
 				$type,
-			)
+			),
 		);
 		WP_CLI::log(
 			message: sprintf( 'Backup site: %1$s',
 				get_site_url(),
-			)
+			),
 		);
 		WP_CLI::log(
 			message: 'Starting backup...',
@@ -775,17 +793,22 @@ final class cli {
 			WP_CLI::log(
 				message: sprintf( '%1$s',
 					$plugin_deactivate_message->stdout,
-				)
+				),
 			);
 		} else {
 			WP_CLI::warning(
-				message: 'The plugins were already active and have not been deactivated.'
+				message: sprintf('The %s plugins were already active and have not been deactivated.',
+					implode(
+						separator: ' and ',
+						array: $ai1wm_plugins,
+					),
+				),
 			);
 		}
 		WP_CLI::success(
 			message: sprintf( '%1$s backup succeeded.',
 				ucfirst( $type ),
-			)
+			),
 		);
 	}
 
@@ -832,7 +855,7 @@ final class cli {
 					message: sprintf( 'The backup file "%1$s" in the backup directory "%2$s" does not exist.',
 						$wpress_backup_file,
 						$ai1wm_path,
-					)
+					),
 				);
 			}
 		} else {
@@ -862,7 +885,7 @@ final class cli {
 		WP_CLI::debug(
 			message: sprintf( '$plugins_need_to_be_activated: %1$s',
 				$plugins_need_to_be_activated ? 'true' : 'false',
-			)
+			),
 		);
 		$wp_path = WP_CLI::get_config( key: 'path' ) ?? '.';
 		// default parameters to WP_CLI::runcommand().
@@ -889,7 +912,7 @@ final class cli {
 			WP_CLI::log(
 				message: sprintf( '%1$s',
 					$plugin_activate_message->stdout,
-				)
+				),
 			);
 		} else {
 			WP_CLI::warning(
@@ -898,7 +921,7 @@ final class cli {
 						separator: ' and ',
 						array: $ai1wm_plugins,
 					),
-				)
+				),
 			);
 		}
 		$ai1wm_command_arguments = sprintf( '--yes %1$s',
@@ -914,7 +937,7 @@ final class cli {
 			message: sprintf( 'Restoring %1$s from %2$s...',
 				get_site_url(),
 				$wpress_backup_file,
-			)
+			),
 		);
 		$return_message = WP_CLI::runcommand(
 			command: sprintf( '%1$s restore %2$s',
@@ -926,7 +949,7 @@ final class cli {
 		WP_CLI::log(
 			message: sprintf( '%1$s',
 				$return_message,
-			)
+			),
 		);
 		// don't deactivate the plugins if they were already active.
 		if ( $plugins_need_to_be_activated ) {
@@ -938,14 +961,21 @@ final class cli {
 			WP_CLI::log(
 				message: sprintf( '%1$s',
 					$plugin_deactivate_message->stdout,
-				)
+				),
 			);
 		} else {
 			WP_CLI::warning(
-				message: 'The plugins were already active and have not been deactivated.'
+				message: sprintf('The %1$s plugins were already active and have not been deactivated.',
+					implode(
+						separator: ' and ',
+						array: $ai1wm_plugins,
+					),
+				),
 			);
 		}
-		WP_CLI::success( message: 'Restore succeeded.' );
+		WP_CLI::success(
+			message: 'Restore succeeded.',
+		);
 	}
 
 	/**
@@ -1423,20 +1453,22 @@ final class cli {
 			),
 			options: $runcommand_options,
 		);
-		WP_CLI::debug( sprintf( '$return_code: %1$s',
-			$return_code,
-		));
+		WP_CLI::debug(
+			message: sprintf( '$return_code: %1$s',
+				$return_code,
+			),
+		);
 		$has_command = ! ( $return_code == '1' );
 		WP_CLI::debug(
 			message: sprintf( '$has_command: %1$s',
 				$has_command ? 'true' : 'false',
-			)
+			),
 		);
 		if ( ! $has_command ) {
 			WP_CLI::error(
 				message: sprintf( 'the "%1$s" command could not be found.',
 					$command_name,
-				)
+				),
 			);
 		}
 	}
@@ -1593,7 +1625,7 @@ final class cli {
 					),
 					// single or plural verb.
 					count( $plugin_presence_check ) == 1 ? 'is': 'are',
-				)
+				),
 			);
 		}
 	}
@@ -1607,8 +1639,8 @@ final class cli {
 	{
 		return array_map (
 			// strip off filename from key ("directory/filename.php").
-			fn ( $plugin_slug ) => dirname( $plugin_slug ),
-			$this->ai1wm_plugin_slugs,
+			callback: fn ( $plugin_slug ) => dirname( $plugin_slug ),
+			array: $this->ai1wm_plugin_slugs,
 		);
 	}
 
@@ -1673,7 +1705,7 @@ final class cli {
 				message: sprintf( '%1$s is set to %2$s.',
 					$constant,
 					! $current_value->stdout ? 'true' : 'false',
-				)
+				),
 			);
 		} else {
 			WP_CLI::error(
@@ -1759,7 +1791,7 @@ final class cli {
 				decimals: $decimals,
 			)
 		);
-		return sprintf('%1$s%2$s',
+		return sprintf( '%1$s%2$s',
 			$amount,
 			$unit[0], // get first character.
 		);
