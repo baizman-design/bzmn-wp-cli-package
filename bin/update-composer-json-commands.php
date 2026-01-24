@@ -147,6 +147,25 @@ _debug(
 
 // skip if we're forcing it.
 if ( ! $force ) {
+	// have any methods been removed from the source but not composer.json?
+	if ( $cruft = array_diff( $composer_data->extra->commands, $reflection_command_names ) ) {
+		_die(
+			message: sprintf( 'The following %4$s in %3$s %5$s not exist in %2$s: %1$s.',
+				implode(
+					separator: ', ',
+					array: $cruft,
+				),
+				$command_path,
+				$composer,
+				count( $cruft ) == 1 ? 'command' : 'commands',
+				count( $cruft ) == 1 ? 'does' : 'do',
+			),
+		);
+	}
+}
+
+// skip if we're forcing it.
+if ( ! $force ) {
 	// have there been any changes? if not, quit.
 	if ( ! array_diff( $reflection_command_names, $composer_data->extra->commands ) ) {
 		_die(
@@ -242,6 +261,11 @@ function _die (
 {
 	// append newline.
 	$message .= PHP_EOL;
+	if ( $exit_code == 1 ) {
+		$message = sprintf('ERROR: %1$s',
+			$message,
+		);
+	}
 	print( $message );
 	exit( $exit_code );
 }
