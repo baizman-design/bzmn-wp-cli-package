@@ -45,7 +45,6 @@
             "bzmn flush-rewrite-rules",
             "bzmn populate-post-meta",
             "bzmn print-custom-post-types",
-            "bzmn print-image-sizes",
             "bzmn print-wp-environment",
             "bzmn restore",
             "bzmn set-toolset-post-type-pagination",
