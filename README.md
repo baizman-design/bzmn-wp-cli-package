@@ -277,46 +277,11 @@ wp bzmn print-custom-post-types [--format=<format>] [--sort-by=<field>] [--inclu
 
 ### wp bzmn print-image-sizes
 
-Print the image sizes registered via add_image_size().
+
 
 ~~~
-wp bzmn print-image-sizes [--fields=<fields>] [--format=<format>]
+wp bzmn print-image-sizes
 ~~~
-
-**OPTIONS**
-
-	[--fields=<fields>]
-		Output specific fields. The default is all fields.
-		---
-		options:
-		  - size
-		  - width
-		  - height
-		  - crop
-
-	[--format=<format>]
-		Format output.
-		---
-		default: table
-		options:
-		  - table
-		  - json
-		  - csv
-		  - yaml
-
-**EXAMPLES**
-
-    # Print the image sizes in a table.
-    wp bzmn print-image-sizes
-
-    # Print the image sizes in as json.
-    wp bzmn print-image-sizes --format=json
-
-    # Print the image sizes with only the size and crop columns.
-    wp bzmn print-image-sizes --fields=size,crop
-
-    # Print the image sizes with only the size and crop columns in csv format.
-    wp bzmn print-image-sizes --fields=size,crop --format=csv
 
 
 
