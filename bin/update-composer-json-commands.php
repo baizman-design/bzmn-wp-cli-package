@@ -111,6 +111,17 @@ _debug(
 	label: '$reflection_command_names',
 );
 
+// manually prepend command name to array as first item.
+array_unshift(
+	$reflection_command_names,
+	$command_name,
+);
+
+_debug(
+	data: $reflection_command_names,
+	label: '$reflection_command_names',
+);
+
 // get composer file data.
 if ( ! $json = file_get_contents( $composer ) ) {
 	_die(

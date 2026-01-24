@@ -46,6 +46,18 @@ There are a few automated processes.
 
 This package implements the following commands:
 
+### wp bzmn
+
+A WP CLI package for multiple clients.
+
+~~~
+wp bzmn
+~~~
+
+A WP CLI package for multiple clients. Written by Saul Baizman, Baizman Design (https://baizmandesign.com).
+
+
+
 ### wp bzmn backup
 
 Back up a website using All-in-One WP Migration and Backup plugins.

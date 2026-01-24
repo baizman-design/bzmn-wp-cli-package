@@ -37,6 +37,7 @@
     },
     "extra": {
         "commands": [
+            "bzmn",
             "bzmn backup",
             "bzmn clear-cloudflare-cache",
             "bzmn clear-sucuri-cache",
