@@ -11,6 +11,9 @@ final class cli {
 	// flag to set whether the changes are made.
 	private bool $dry_run = false;
 
+	// flag to set porcelain mode.
+	private bool $porcelain = false;
+
 	// WP CLI command name for backup and restore commands.
 	private string $ai1wm_command = 'ai1wm';
 
@@ -504,6 +507,9 @@ final class cli {
 	 *   - full
 	 *   - sql
 	 *
+	 * [--porcelain]
+	 * : Output just the backup filename.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     # Make a default (quick) backup.
@@ -518,6 +524,9 @@ final class cli {
 	 *     # Make a database (SQL) backup.
 	 *     wp bzmn backup --type=sql
 	 *
+	 *     # Make a quick (database) backup, outputting only the filename.
+	 *     wp bzmn backup --type=quick --porcelain
+	 *
      * @subcommand backup
      * @alias bu
 	 */
@@ -531,6 +540,13 @@ final class cli {
 			flag: 'type',
 			default: 'quick',
 		);
+		$porcelain = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'porcelain',
+			default: $this->porcelain,
+		);
+		// set class property. needed when backup_database() is called.
+		$this->porcelain = $porcelain;
 		// mysql dump.
 		if ( $type == 'sql' ) {
 			$this->backup_database( file: sprintf('%1$s/%2$s-%3$s-export.sql',
@@ -538,11 +554,13 @@ final class cli {
 				DB_NAME,
 				date( 'YmdHis' ),
 			));
-			WP_CLI::success(
-				message: sprintf('%1$s backup succeeded.',
-					ucfirst( $type ),
-				),
-			);
+			if ( ! $porcelain ) {
+				WP_CLI::success(
+					message: sprintf('%1$s backup succeeded.',
+						ucfirst( $type ),
+					),
+				);
+			}
 			// we're done here.
 			WP_CLI::halt(
 				return_code: 0,
@@ -620,20 +638,24 @@ final class cli {
 				command_name: $this->ai1wm_command,
 				runcommand_options: $has_command_return_options,
 			);
-			WP_CLI::log(
-				message: sprintf( '%1$s',
-					$plugin_activate_message->stdout,
-				),
-			);
-		} else {
-			WP_CLI::warning(
-				message: sprintf( 'The %1$s plugins are already activate. Continuing...',
-					implode(
-						separator: ' and ',
-						array: $ai1wm_plugins,
+			if ( ! $porcelain ) {
+				WP_CLI::log(
+					message: sprintf( '%1$s',
+						$plugin_activate_message->stdout,
 					),
-				),
-			);
+				);
+			}
+		} else {
+			if ( ! $porcelain ) {
+				WP_CLI::warning(
+					message: sprintf( 'The %1$s plugins are already activate. Continuing...',
+						implode(
+							separator: ' and ',
+							array: $ai1wm_plugins,
+						),
+					),
+				);
+			}
 		}
 		$ai1wm_command_arguments = '';
 		if ( $type == 'quick' ) {
@@ -642,19 +664,21 @@ final class cli {
 				array: $quick_backup_args,
 			);
 		}
-		WP_CLI::log(
-			message: sprintf( 'Backup type: %1$s',
-				$type,
-			),
-		);
-		WP_CLI::log(
-			message: sprintf( 'Backup site: %1$s',
-				get_site_url(),
-			),
-		);
-		WP_CLI::log(
-			message: 'Starting backup...',
-		);
+		if ( ! $porcelain ) {
+			WP_CLI::log(
+				message: sprintf( 'Backup type: %1$s',
+					$type,
+				),
+			);
+			WP_CLI::log(
+				message: sprintf( 'Backup site: %1$s',
+					get_site_url(),
+				),
+			);
+			WP_CLI::log(
+				message: 'Starting backup...',
+			);
+		}
 		$backup_command_return_options = wp_parse_args (
 			args: [
 				'return' => 'all', // return all information.
@@ -686,9 +710,25 @@ final class cli {
 				return_code: 1,
 			);
 		} else {
-			WP_CLI::log(
-				message: $backup_command_return_message->stdout,
-			);
+			if ( ! $porcelain ) {
+				WP_CLI::log(
+					message: $backup_command_return_message->stdout,
+				);
+			}
+			// get just the filename.
+			if ( $porcelain ) {
+				$backup_command_return_message_lines = explode(
+					separator: PHP_EOL,
+					string: $backup_command_return_message->stdout,
+				);
+				list ( , $wpress_filename, ) = explode(
+					separator: ': ',
+					string: $backup_command_return_message_lines[3],
+				);
+				WP_CLI::log(
+					message: $wpress_filename,
+				);
+			}
 		}
 		// don't deactivate the plugins if they were already active.
 		if ( $plugins_need_to_be_activated ) {
@@ -697,26 +737,32 @@ final class cli {
 				runcommand_option_defaults: $runcommand_option_defaults,
 				network_flag: $network_flag,
 			);
-			WP_CLI::log(
-				message: sprintf( '%1$s',
-					$plugin_deactivate_message->stdout,
-				),
-			);
-		} else {
-			WP_CLI::warning(
-				message: sprintf('The %s plugins were already active and have not been deactivated.',
-					implode(
-						separator: ' and ',
-						array: $ai1wm_plugins,
+			if ( ! $porcelain ) {
+				WP_CLI::log(
+					message: sprintf( '%1$s',
+						$plugin_deactivate_message->stdout,
 					),
+				);
+			}
+		} else {
+			if ( ! $porcelain ) {
+				WP_CLI::warning(
+					message: sprintf( 'The %s plugins were already active and have not been deactivated.',
+						implode(
+							separator: ' and ',
+							array: $ai1wm_plugins,
+						),
+					),
+				);
+			}
+		}
+		if ( ! $porcelain ) {
+			WP_CLI::success(
+				message: sprintf( '%1$s backup succeeded.',
+					ucfirst( $type ),
 				),
 			);
 		}
-		WP_CLI::success(
-			message: sprintf( '%1$s backup succeeded.',
-				ucfirst( $type ),
-			),
-		);
 	}
 
 	/**
@@ -1297,9 +1343,11 @@ final class cli {
 			defaults: $runcommand_options_defaults,
 		);
 		if ( ! $this->dry_run ) {
-			WP_CLI::log(
-				message: 'Backing up the database...',
-			);
+			if ( ! $this->porcelain ) {
+				WP_CLI::log(
+					message: 'Backing up the database...',
+				);
+			}
 			$output = WP_CLI::runcommand(
 				command: sprintf( 'db export %1$s --porcelain',
 					$file,
@@ -1323,14 +1371,21 @@ final class cli {
 					return_code: 1,
 				);
 			}
-			WP_CLI::log(
-				message: sprintf( 'Backup filename: %1$s',
-					$output->stdout,
-				),
-			);
-			WP_CLI::log(
-				message: '...done',
-			);
+			if ( ! $this->porcelain ) {
+				WP_CLI::log(
+					message: sprintf( 'Backup filename: %1$s',
+						$output->stdout,
+					),
+				);
+				WP_CLI::log(
+					message: '...done',
+				);
+			}
+			if ( $this->porcelain ) {
+				WP_CLI::log(
+					message: $output->stdout,
+				);
+			}
 		}
 		else {
 			WP_CLI::log(
