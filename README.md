@@ -63,7 +63,7 @@ A WP CLI package for multiple clients. Written by Saul Baizman, Baizman Design (
 Back up a website using All-in-One WP Migration and Backup plugins.
 
 ~~~
-wp bzmn backup [--type=<type>]
+wp bzmn backup [--type=<type>] [--porcelain]
 ~~~
 
 **OPTIONS**
@@ -76,6 +76,9 @@ wp bzmn backup [--type=<type>]
 		  - quick
 		  - full
 		  - sql
+
+	[--porcelain]
+		Output just the backup filename.
 
 **EXAMPLES**
 
@@ -90,6 +93,9 @@ wp bzmn backup [--type=<type>]
 
     # Make a database (SQL) backup.
     wp bzmn backup --type=sql
+
+    # Make a quick (database) backup, outputting only the filename.
+    wp bzmn backup --type=quick --porcelain
 
 
 
@@ -284,16 +290,6 @@ wp bzmn print-custom-post-types [--format=<format>] [--sort-by=<field>] [--inclu
 
     # Print the custom and built-in post types sorted alphabetically by slug.
     wp bzmn print-custom-post-types --include_builtins --sort-by=slug
-
-
-
-### wp bzmn print-image-sizes
-
-
-
-~~~
-wp bzmn print-image-sizes
-~~~
 
 
 
