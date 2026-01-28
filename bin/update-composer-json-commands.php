@@ -81,6 +81,12 @@ _debug(
 	label: '$reflection_object',
 );
 
+// note: this outputs nothing.
+_debug(
+	data: $reflection_object->getDocComment(),
+	label: '$reflection_object->getDocComment()',
+);
+
 // retrieve public methods.
 $public_methods = $reflection_object->getMethods( filter: ReflectionMethod::IS_PUBLIC );
 
@@ -89,16 +95,19 @@ _debug(
 	label: '$public_methods',
 );
 
-$method_name_replacements = [
-	'_' => '-',
-];
-// convert method names to command names. replace "-" with "_".
 $reflection_command_names = array_map(
 	callback: fn( $method ) => sprintf( '%1$s %2$s',
 		$command_name,
-		strtr( $method->getName(), $method_name_replacements ),
+		_get_subcommand_directive(
+			method: $method,
+		),
 	),
 	array: $public_methods,
+);
+
+_debug(
+	data: $reflection_command_names,
+	label: '$reflection_command_names',
 );
 
 // alphabetize the commands.
@@ -240,7 +249,7 @@ function _debug(
 			);
 		}
 		print_r(
-			value: $data
+			value: $data,
 		);
 		echo PHP_EOL;
 	}
@@ -268,4 +277,53 @@ function _die (
 	}
 	print( $message );
 	exit( $exit_code );
+}
+
+/**
+ * Return the "@subcommand" directive value in a DocBlock (or a default value).
+ *
+ * @param ReflectionMethod $method
+ *
+ * @return string
+ */
+function _get_subcommand_directive(
+	ReflectionMethod $method,
+):string {
+	$docblock = $method->getDocComment();
+	$method_name = $method->getName();
+	// https://www.php.net/manual/en/reflectionclass.getdoccomment.php#118606
+	$pattern = "# (@[a-zA-Z]+\s*[a-zA-Z0-9, ()_].*)#";
+	preg_match_all(
+		$pattern,
+		$docblock,
+		$matches,
+		PREG_PATTERN_ORDER,
+	);
+	_debug(
+		data: $matches,
+		label: '$matches',
+	);
+	$directives = [];
+	foreach ( $matches[1] as $directive_line ) {
+		_debug(
+			data: $directive_line,
+			label: '$directive_line',
+		);
+		list( $directive, $value ) = explode(
+			separator: ' ',
+			string: $directive_line,
+		);
+		// TODO (maybe): identify potential duplicates and abort.
+		$directives[$directive] = $value;
+	}
+	_debug(
+		data: $directives,
+		label: '$directives',
+	);
+	// if there's no @subcommand directive, fall back to the method name (with proper substitutions).
+	return $directives['@subcommand'] ?? str_replace(
+		search: '_',
+		replace: '-',
+		subject: $method_name,
+	);
 }
