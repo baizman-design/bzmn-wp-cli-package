@@ -782,6 +782,7 @@ final class cli {
 	 *     wp bzmn restore a1b2c3.wpress
 	 *
      * @subcommand restore
+	 * @alias re
 	 */
 	public function restore(
 		array $args = [],
