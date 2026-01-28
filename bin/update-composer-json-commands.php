@@ -304,18 +304,21 @@ function _get_subcommand_directive(
 		label: '$matches',
 	);
 	$directives = [];
-	foreach ( $matches[1] as $directive_line ) {
-		_debug(
-			data: $directive_line,
-			label: '$directive_line',
-		);
-		list( $directive, $value ) = explode(
-			separator: ' ',
-			string: $directive_line,
-		);
-		// TODO (maybe): identify potential duplicates and abort.
-		$directives[$directive] = $value;
-	}
+	array_map(
+		callback: function ( $directive_line ) use ( & $directives ) {
+			_debug(
+				data: $directive_line,
+				label: '$directive_line',
+			);
+			list( $directive, $value ) = explode(
+				separator: ' ',
+				string: $directive_line,
+			);
+			// TODO (maybe): identify potential duplicates and abort.
+			$directives[$directive] = $value;
+		},
+		array: $matches[1],
+	);
 	_debug(
 		data: $directives,
 		label: '$directives',
