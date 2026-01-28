@@ -1,9 +1,16 @@
 <?php
 
-// open src/cli.php
-// use reflection to read public method names (and @subcommand directives?)
-// read in composer.json, convert to an object, update extra->commands, then save the file
+/*
+1. use reflection to retrieve DocBlocks of public methods in src/cli.php.
+2. locate @subcommand directives; if none exists, use the method name (with string substitutions for "_" to "-").
+3. read in composer.json, convert to an object, update extra->commands property, and save back to composer.json.
 
+flags:
+
+-d | --debug: enable verbose output
+-f | --force: force the repopulation of the commands in composer.json
+
+*/
 namespace baizman_design_cli;
 
 use ReflectionClass;
@@ -120,7 +127,7 @@ _debug(
 	label: '$reflection_command_names',
 );
 
-// manually prepend command name to array as first item.
+// manually prepend the command name to the array as the first item.
 array_unshift(
 	$reflection_command_names,
 	$command_name,
@@ -157,17 +164,18 @@ _debug(
 // skip if we're forcing it.
 if ( ! $force ) {
 	// have any methods been removed from the source but not composer.json?
+	// in other words, are there any commands in composer.json that are not in src/cli.php?
 	if ( $cruft = array_diff( $composer_data->extra->commands, $reflection_command_names ) ) {
 		_die(
 			message: sprintf( 'The following %4$s in %3$s %5$s not exist in %2$s: %1$s.',
 				implode(
 					separator: ', ',
 					array: $cruft,
-				),
-				$command_path,
-				$composer,
-				count( $cruft ) == 1 ? 'command' : 'commands',
-				count( $cruft ) == 1 ? 'does' : 'do',
+				), // 1
+				$command_path, // 2
+				$composer, // 3
+				count( $cruft ) == 1 ? 'command' : 'commands', // 4
+				count( $cruft ) == 1 ? 'does' : 'do', // 5
 			),
 		);
 	}
