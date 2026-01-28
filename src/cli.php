@@ -1,4 +1,7 @@
 <?php
+/**
+ * CLI class.
+ */
 
 namespace baizman_design_cli;
 
@@ -104,7 +107,7 @@ final class cli {
 			),
 		);
 	}
-	
+
 	/**
 	 * Print custom post types.
 	 *
