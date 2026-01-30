@@ -1529,8 +1529,12 @@ final class cli {
 		string $network_flag = '',
 		bool $activate = false,
 	):object {
+		list ( $ai1wm_plugins, $runcommand_option_defaults, $network_flag, ) = func_get_args();
 		return $this->activate_ai1wm_plugins(
-			...func_get_args(),
+			ai1wm_plugins: $ai1wm_plugins,
+			runcommand_option_defaults: $runcommand_option_defaults,
+			network_flag: $network_flag,
+			activate: $activate,
 		);
 	}
 
