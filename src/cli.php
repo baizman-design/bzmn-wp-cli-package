@@ -1440,11 +1440,12 @@ final class cli {
 	}
 
 	/**
-	 * Activate the plugins.
+	 * Activate/deactivate the plugins.
 	 *
 	 * @param array $ai1wm_plugins
 	 * @param array $runcommand_option_defaults
 	 * @param string $network_flag
+	 * @param bool $activate
 	 *
 	 * @return object
 	 * @throws ExitException
@@ -1453,58 +1454,71 @@ final class cli {
 		array $ai1wm_plugins,
 		array $runcommand_option_defaults,
 		string $network_flag = '',
+		bool $activate = true,
 	):object
 	{
+		if ( $activate ) {
+			// activate plugins.
+			$verb = 'Activating';
+			$subcommand = 'activate';
+		} else {
+			// deactivate plugins.
+			$verb = 'Deactivating';
+			$subcommand = 'deactivate';
+		}
 		WP_CLI::log(
-			message: sprintf( 'Activating plugins %1$s...',
+			message: sprintf( '%2$s plugins %1$s...',
 				implode(
 					separator: ' and ',
 					array: $ai1wm_plugins,
-				),
+				), // 1
+				$verb, // 2
 			)
 		);
-		$plugin_activate_options = wp_parse_args(
+		$runcommand_options = wp_parse_args(
 			args: [
 				'return' => 'all',
 				'exit_error' => false, // don't exit on error.
 			],
 			defaults: $runcommand_option_defaults,
 		);
-		$plugin_activate_message = WP_CLI::runcommand(
-			command: sprintf( 'plugin activate %1$s %2$s',
+		$plugin_command_message = WP_CLI::runcommand(
+			command: sprintf( 'plugin %3$s %1$s %2$s',
 				implode(
 					separator: ' ',
 					array: $ai1wm_plugins,
-				),
-				$network_flag,
+				), // 1
+				$network_flag, // 2
+				$subcommand, // 3
 			),
-			options: $plugin_activate_options,
+			options: $runcommand_options,
 		);
-		if ( $plugin_activate_message->return_code == '1' ) {
-			if ( $plugin_activate_message->stdout ) {
+		if ( $plugin_command_message->return_code == '1' ) {
+			if ( $plugin_command_message->stdout ) {
 				WP_CLI::error(
-					message: $plugin_activate_message->stdout,
+					message: $plugin_command_message->stdout,
 					exit: false,
 				);
 			}
-			if ( $plugin_activate_message->stderr ) {
+			if ( $plugin_command_message->stderr ) {
 				WP_CLI::log(
-					message: $plugin_activate_message->stderr,
+					message: $plugin_command_message->stderr,
 				);
 			}
 			WP_CLI::halt(
 				return_code: 1,
 			);
 		}
-		return $plugin_activate_message;
+		return $plugin_command_message;
 	}
 
 	/**
-	 * Deactivate the plugins.
+	 * Deactivate the plugins. Just a wrapper for activate_ai1wm_plugins() method.
 	 *
 	 * @param array $ai1wm_plugins
 	 * @param array $runcommand_option_defaults
 	 * @param string $network_flag
+	 * @param bool $activate
 	 *
 	 * @return object
 	 * @throws ExitException
@@ -1513,50 +1527,11 @@ final class cli {
 		array $ai1wm_plugins,
 		array $runcommand_option_defaults,
 		string $network_flag = '',
-	):object
-	{
-		WP_CLI::log(
-			message: sprintf( 'Deactivating plugins %1$s...',
-				implode(
-					separator: ' ',
-					array: $ai1wm_plugins,
-				),
-			)
+		bool $activate = false,
+	):object {
+		return $this->activate_ai1wm_plugins(
+			...func_get_args(),
 		);
-		$plugin_deactivate_options = wp_parse_args(
-			args: [
-				'return' => 'all',
-				'exit_error' => false, // don't exit on error.
-			],
-			defaults: $runcommand_option_defaults,
-		);
-		$plugin_deactivate_message = WP_CLI::runcommand(
-			command: sprintf( 'plugin deactivate %1$s %2$s',
-				implode(
-					separator: ' ',
-					array: $ai1wm_plugins,
-				),
-				$network_flag,
-			),
-			options: $plugin_deactivate_options,
-		);
-		if ( $plugin_deactivate_message->return_code == '1' ) {
-			if ( $plugin_deactivate_message->stdout ) {
-				WP_CLI::error(
-					message: $plugin_deactivate_message->stdout,
-					exit: false,
-				);
-			}
-			if ( $plugin_deactivate_message->stderr ) {
-				WP_CLI::log(
-					message: $plugin_deactivate_message->stderr,
-				);
-			}
-			WP_CLI::halt(
-				return_code: 1,
-			);
-		}
-		return $plugin_deactivate_message;
 	}
 
 	/**
