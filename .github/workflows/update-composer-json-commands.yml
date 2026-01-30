@@ -1,4 +1,8 @@
-# when i add a new public method in src/cli.php, the composer.json will be automatically updated to include it.
+# When I add a new public method in src/cli.php, the project's composer.json will be automatically updated to include it.
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
+# Required GHA repository variables:
+# + REPO_PHP_CLI_SOURCE: the path to the WP-CLI class (e.g., "src/cli.php")
+# + REPO_COMMAND_NAME: the WP-CLI command name (e.g., "bzmn")
 
 name: update commands section in composer.json
 on:
@@ -7,45 +11,13 @@ on:
       - production
     paths:
       - src/cli.php
-  # run this workflow manually
+  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-
-env:
-  COMPOSER: composer.json
 
 permissions:
   contents: write
 
 jobs:
-  update-composer-json:
-    name: update composer.json and commit it back to the repository
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    steps:
-      - name: check out the repository
-        uses: actions/checkout@v4
-      - name: check php version
-        run: php -v
-      - name: run bin/update-composer-json-commands.php
-        run: php bin/update-composer-json-commands.php | tee -a ${GITHUB_STEP_SUMMARY}
-      - name: commit composer.json, if needed
-        run: >
-          git config --global --add safe.directory '*';
-          git config --global user.name 'Saul Baizman';
-          git config --global user.email 'baizman-design@users.noreply.github.com';
-          set +e;
-          git diff --quiet --exit-code;
-          if [ $? -eq 1 ];
-          then
-          set -e;
-          added="$(git diff --numstat ${COMPOSER} | awk '{print $1}')";
-          echo "lines added: ${added:-0}" | tee -a ${GITHUB_STEP_SUMMARY};
-          deleted="$(git diff --numstat ${COMPOSER} | awk '{print $2}')";
-          echo "lines deleted: ${deleted:-0}" | tee -a ${GITHUB_STEP_SUMMARY};
-          git add ${COMPOSER};
-          git commit -m "Updated ${COMPOSER} via GHA.";
-          git push;
-          echo "changes were successfully committed to the repository." | tee -a ${GITHUB_STEP_SUMMARY};
-          else
-          echo "it appears nothing changed." | tee -a ${GITHUB_STEP_SUMMARY};
-          fi
+  update-composer-json-commands:
+    uses: baizman-design/reusable-workflows/.github/workflows/update-composer-json-commands.yml@production
+    secrets: inherit
