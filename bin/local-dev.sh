@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 IMAGE_NAME="bzmn-wp-cli-package-image"
-CONTAINER_NAME="bzmn-wp-cli-package"
+CONTAINER_NAME="bzmn-wp-cli-package-container"
 DOCKERFILE="../Dockerfile"
 
 DOCKER="$(which docker)"
