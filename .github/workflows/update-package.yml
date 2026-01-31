@@ -22,22 +22,32 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: make .ssh directory
-        run: mkdir -vp ~/.ssh
+      - name: make .ssh and .wp-cli directories
+        run: >
+          mkdir -vp ~/.ssh;
+          mkdir -vp ~/.wp-cli;
       - name: download ssh/config
         run: >
-          curl -s -S -L -H "Accept: application/vnd.github.raw+json" -H "Authorization: Bearer ${{ secrets.GH_ACCESS_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" -o ~/.ssh/config https://api.github.com/repos/baizmandesign/dotfiles/contents/ssh/config
+          curl -s -S -L -H "Accept: application/vnd.github.raw+json" -H "Authorization: Bearer ${{ secrets.GH_ACCESS_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" -o ~/.ssh/config https://api.github.com/repos/baizmandesign/dotfiles/contents/ssh/config;
+      - name: download wp-cli/config.yml
+        run: >
+          curl -s -S -L -H "Accept: application/vnd.github.raw+json" -H "Authorization: Bearer ${{ secrets.GH_ACCESS_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" -o ~/.wp-cli/config.yml https://api.github.com/repos/baizmandesign/dotfiles/contents/wp-cli/config.yml;
       - name: install shared ssh key and set file permissions
         run: >
           curl -s -S -L -H "Accept: application/vnd.github.raw+json" -H "Authorization: Bearer ${{ secrets.GH_ACCESS_TOKEN }}" -H "X-GitHub-Api-Version: 2022-11-28" -o ~/.ssh/id_rsa https://api.github.com/repos/baizman-design/github-actions-ssh-keys/contents/docker;
-          chmod 600 ~/.ssh/id_rsa
-      - name: ssh to remote hosts and run wp package update
+          chmod 600 ~/.ssh/id_rsa;
+      - name: download and install wp-cli
+        run: >
+          mkdir bin;
+          wget -q -O /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar;
+          chmod +x /usr/local/bin/wp;
+      - name: update package on remote hosts
         run: >
           remote_hosts="${{ env.repo_remote_hosts }}";
           for remote_host in ${remote_hosts//$'\r'/''};
           do
-          echo "ssh -o LogLevel=ERROR ${remote_host} wp package update" | tee -a ${{ env.logfile }};
-          ssh -o LogLevel=ERROR ${remote_host} wp package update | tee -a ${{ env.logfile }};
+          echo "wp @${remote_host} package update" | tee -a ${{ env.logfile }};
+          wp @${remote_host} package update | tee -a ${{ env.logfile }};
           done;
           cat ${{ env.logfile }} >> ${GITHUB_STEP_SUMMARY};
-          rm -f ${{ env.logfile }}
+          rm -f ${{ env.logfile }};
