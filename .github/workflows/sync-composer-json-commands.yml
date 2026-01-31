@@ -1,6 +1,6 @@
-# when i add a new public method in src/cli.php, the composer.json will be automatically updated to include it.
+# when I add a new public method in src/cli.php, the composer.json will be automatically updated to include it.
 
-name: update commands section in composer.json
+name: sync commands section in composer.json
 on:
   push:
     branches:
@@ -17,8 +17,8 @@ permissions:
   contents: write
 
 jobs:
-  update-composer-json:
-    name: update composer.json and commit it back to the repository
+  sync-composer-json:
+    name: sync composer.json and commit it back to the repository
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
@@ -26,8 +26,8 @@ jobs:
         uses: actions/checkout@v4
       - name: check php version
         run: php -v
-      - name: run bin/update-composer-json-commands.php
-        run: php bin/update-composer-json-commands.php | tee -a ${GITHUB_STEP_SUMMARY}
+      - name: run bin/sync-composer-json-commands.php
+        run: php bin/sync-composer-json-commands.php | tee -a ${GITHUB_STEP_SUMMARY}
       - name: commit composer.json, if needed
         run: >
           git config --global --add safe.directory '*';
