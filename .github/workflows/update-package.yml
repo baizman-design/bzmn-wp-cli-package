@@ -2,7 +2,7 @@
 # hosts are stored in a repository variable ($REPO_REMOTE_HOSTS), one per line.
 # note: we pass "-o LogLevel=ERROR" to the ssh command to quell some warnings.
 
-name: update bzmn wp cli package on remote hosts
+name: update package on remote hosts
 on:
   workflow_run:
     workflows:
