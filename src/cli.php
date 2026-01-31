@@ -1466,15 +1466,17 @@ final class cli {
 			$verb = 'Deactivating';
 			$subcommand = 'deactivate';
 		}
-		WP_CLI::log(
-			message: sprintf( '%2$s plugins %1$s...',
-				implode(
-					separator: ' and ',
-					array: $ai1wm_plugins,
-				), // 1
-				$verb, // 2
-			)
-		);
+		if ( ! $this->porcelain ) {
+			WP_CLI::log(
+				message: sprintf( '%2$s plugins %1$s...',
+					implode(
+						separator: ' and ',
+						array: $ai1wm_plugins,
+					), // 1
+					$verb, // 2
+				)
+			);
+		}
 		$runcommand_options = wp_parse_args(
 			args: [
 				'return' => 'all',
