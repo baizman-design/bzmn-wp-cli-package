@@ -33,7 +33,7 @@ bin export-ignore
 wp-cli.yml export-ignore
 
 # additional documentation directory
-doc-partials export-ignore
+doc export-ignore
 
 # phpstorm ide project configuration directory
 .idea export-ignore

@@ -60,13 +60,13 @@
                 "using"
             ],
             "installation": {
-                "body": "doc-partials/installation.md"
+                "body": "doc/installation.md"
             },
             "docker": {
-                "body": "doc-partials/docker.md"
+                "body": "doc/docker.md"
             },
             "automation": {
-                "body": "doc-partials/github-actions.md"
+                "body": "doc/github-actions.md"
             },
             "show_powered_by": false
         }
