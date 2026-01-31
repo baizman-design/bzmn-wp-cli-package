@@ -206,6 +206,9 @@ $json_to_save = json_encode(
 	flags: JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES, // pretty print, and don't escape slashes.
 );
 
+// append newline.
+$json_to_save .= PHP_EOL;
+
 _debug(
 	data: $json_to_save,
 	label: '$json_to_save',
