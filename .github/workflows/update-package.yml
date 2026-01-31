@@ -38,7 +38,6 @@ jobs:
           chmod 600 ~/.ssh/id_rsa;
       - name: download and install wp-cli
         run: >
-          mkdir bin;
           wget -q -O /usr/local/bin/wp https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar;
           chmod +x /usr/local/bin/wp;
       - name: update package on remote hosts
@@ -46,7 +45,7 @@ jobs:
           remote_hosts="${{ env.repo_remote_hosts }}";
           for remote_host in ${remote_hosts//$'\r'/''};
           do
-          echo "wp @${remote_host} package update" | tee -a ${{ env.logfile }};
+          echo "# wp @${remote_host} package update" | tee -a ${{ env.logfile }};
           wp @${remote_host} package update | tee -a ${{ env.logfile }};
           done;
           cat ${{ env.logfile }} >> ${GITHUB_STEP_SUMMARY};
