@@ -7,7 +7,7 @@ DOCKERFILE="../Dockerfile"
 DOCKER="$(which docker)"
 
 # build the image and start the container
-echo "building Docker image and starting the ${IMAGE_NAME} container..."
+echo "building Docker image \"${IMAGE_NAME}\" and starting the container \"${CONTAINER_NAME}\"..."
 echo "${DOCKER} build -t ${IMAGE_NAME} . -f ${DOCKERFILE}"
 ${DOCKER} build -t ${IMAGE_NAME} . -f ${DOCKERFILE}
 echo "${DOCKER} run --name \"${CONTAINER_NAME}\" -i -t ${IMAGE_NAME}"
