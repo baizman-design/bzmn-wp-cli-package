@@ -1,0 +1,23 @@
+# When I add a new public method in src/cli.php, the project's composer.json will be automatically updated to include it.
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
+# Required GHA repository variables:
+# + REPO_PHP_CLI_SOURCE: the path to the WP-CLI class (e.g., "src/cli.php")
+# + REPO_COMMAND_NAME: the WP-CLI command name (e.g., "bzmn")
+
+name: Update commands section in composer.json
+on:
+  push:
+    branches:
+      - production
+    paths:
+      - src/cli.php
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-composer-json-commands:
+    uses: baizman-design/reusable-workflows/.github/workflows/update-composer-json-commands.yml@production
+    secrets: inherit
