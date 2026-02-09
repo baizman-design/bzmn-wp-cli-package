@@ -1,0 +1,51 @@
+# when I add a new public method in src/cli.php, the composer.json will be automatically updated to include it.
+
+name: sync commands section in composer.json
+on:
+  push:
+    branches:
+      - production
+    paths:
+      - src/cli.php
+  # run this workflow manually
+  workflow_dispatch:
+
+env:
+  COMPOSER: composer.json
+
+permissions:
+  contents: write
+
+jobs:
+  sync-composer-json:
+    name: sync composer.json and commit it back to the repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: check out the repository
+        uses: actions/checkout@v4
+      - name: check php version
+        run: php -v
+      - name: run bin/sync-composer-json-commands.php
+        run: php bin/sync-composer-json-commands.php | tee -a ${GITHUB_STEP_SUMMARY}
+      - name: commit composer.json, if needed
+        run: >
+          git config --global --add safe.directory '*';
+          git config --global user.name 'Saul Baizman';
+          git config --global user.email 'baizman-design@users.noreply.github.com';
+          set +e;
+          git diff --quiet --exit-code;
+          if [ $? -eq 1 ];
+          then
+          set -e;
+          added="$(git diff --numstat ${COMPOSER} | awk '{print $1}')";
+          echo "lines added: ${added:-0}" | tee -a ${GITHUB_STEP_SUMMARY};
+          deleted="$(git diff --numstat ${COMPOSER} | awk '{print $2}')";
+          echo "lines deleted: ${deleted:-0}" | tee -a ${GITHUB_STEP_SUMMARY};
+          git add ${COMPOSER};
+          git commit -m "Updated ${COMPOSER} via GHA.";
+          git push;
+          echo "changes were successfully committed to the repository." | tee -a ${GITHUB_STEP_SUMMARY};
+          else
+          echo "it appears nothing changed." | tee -a ${GITHUB_STEP_SUMMARY};
+          fi
