@@ -513,6 +513,9 @@ final class cli {
 	 * [--porcelain]
 	 * : Output just the backup filename.
 	 *
+	 * [--force-plugin-deactivation]
+	 * : Force the deactivation of the backup plugins. Typically, if the backup plugins were active before invocation, they are left active after invocation.
+	 *
 	 * ## EXAMPLES
 	 *
 	 *     # Make a default (quick) backup.
@@ -529,6 +532,9 @@ final class cli {
 	 *
 	 *     # Make a quick (database) backup, outputting only the filename.
 	 *     wp bzmn backup --type=quick --porcelain
+	 *
+	 *     # Make a quick (database) backup, forcibly deactivating the plugins afterwards.
+	 *     wp bzmn backup --type=quick --force-plugin-deactivation
 	 *
      * @subcommand backup
      * @alias bu
@@ -547,6 +553,11 @@ final class cli {
 			assoc_args: $assoc_args,
 			flag: 'porcelain',
 			default: $this->porcelain,
+		);
+		$force_plugin_deactivation = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'force-plugin-deactivation',
+			default: false,
 		);
 		// set class property. needed when backup_database() is called.
 		$this->porcelain = $porcelain;
@@ -733,8 +744,9 @@ final class cli {
 				);
 			}
 		}
-		// don't deactivate the plugins if they were already active.
-		if ( $plugins_need_to_be_activated ) {
+		// don't deactivate the plugins if they were already active,
+		// or, if forced, deactivate the plugins.
+		if ( $plugins_need_to_be_activated || $force_plugin_deactivation ) {
 			$plugin_deactivate_message = $this->deactivate_ai1wm_plugins(
 				ai1wm_plugins: $ai1wm_plugins,
 				runcommand_option_defaults: $runcommand_option_defaults,
