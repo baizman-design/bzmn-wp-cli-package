@@ -32,27 +32,27 @@ jobs:
       - name: check out the repository
         uses: actions/checkout@v4
       - name: generate the command's documentation
-        run: >
-          composer dump-autoload;
-          wp scaffold package-readme --branch=${{ github.event.repository.default_branch }} --force .;
+        run: |
+          composer dump-autoload
+          wp scaffold package-readme --branch=${{ github.event.repository.default_branch }} --force .
       - name: commit documentation, if needed
-        run: >
-          git config --global --add safe.directory '*';
-          git config --global user.name 'Saul Baizman';
-          git config --global user.email 'baizman-design@users.noreply.github.com';
-          set +e;
-          git diff --quiet --exit-code;
-          if [ $? -eq 1 ];
+        run: |
+          git config --global --add safe.directory '*'
+          git config --global user.name 'Saul Baizman'
+          git config --global user.email 'baizman-design@users.noreply.github.com'
+          set +e
+          git diff --quiet --exit-code
+          if [ $? -eq 1 ]
           then
-          set -e;
-          added="$(git diff --numstat ${README} | awk '{print $1}')";
-          echo "lines added: ${added:-0}" | tee -a ${GITHUB_STEP_SUMMARY};
-          deleted="$(git diff --numstat ${README} | awk '{print $2}')";
-          echo "lines deleted: ${deleted:-0}" | tee -a ${GITHUB_STEP_SUMMARY};
-          git add ${README};
-          git commit -m "Updated ${README} via GHA.";
-          git push;
-          echo "changes were successfully committed to the repository." | tee -a ${GITHUB_STEP_SUMMARY};
+          set -e
+          added="$(git diff --numstat ${README} | awk '{print $1}')"
+          echo "lines added: ${added:-0}" | tee -a ${GITHUB_STEP_SUMMARY}
+          deleted="$(git diff --numstat ${README} | awk '{print $2}')"
+          echo "lines deleted: ${deleted:-0}" | tee -a ${GITHUB_STEP_SUMMARY}
+          git add ${README}
+          git commit -m "Updated ${README} via GHA."
+          git push
+          echo "changes were successfully committed to the repository." | tee -a ${GITHUB_STEP_SUMMARY}
           else
-          echo "it appears nothing changed." | tee -a ${GITHUB_STEP_SUMMARY};
+          echo "it appears nothing changed." | tee -a ${GITHUB_STEP_SUMMARY}
           fi
