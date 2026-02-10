@@ -47,6 +47,11 @@ jobs:
           do
           echo "# wp @${remote_host} package update" | tee -a ${{ env.logfile }}
           wp @${remote_host} package update | tee -a ${{ env.logfile }}
+          return=${PIPESTATUS[0]}
+          if [ ${return} -ne 0 ]
+          then
+          echo "**ERROR:** \`wp @${remote_host} package update\` failed." | tee -a ${{ env.logfile }}
+          fi
           done
           cat ${{ env.logfile }} >> ${GITHUB_STEP_SUMMARY}
           rm -f ${{ env.logfile }}
