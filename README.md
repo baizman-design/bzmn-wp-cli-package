@@ -63,7 +63,7 @@ A WP CLI package for multiple clients. Written by Saul Baizman, Baizman Design (
 Back up a website using All-in-One WP Migration and Backup plugins.
 
 ~~~
-wp bzmn backup [--type=<type>] [--porcelain]
+wp bzmn backup [--type=<type>] [--porcelain] [--force-plugin-deactivation]
 ~~~
 
 **OPTIONS**
@@ -79,6 +79,9 @@ wp bzmn backup [--type=<type>] [--porcelain]
 
 	[--porcelain]
 		Output just the backup filename.
+
+	[--force-plugin-deactivation]
+		Force the deactivation of the backup plugins. Typically, if the backup plugins were active before invocation, they are left active after invocation.
 
 **EXAMPLES**
 
@@ -96,6 +99,9 @@ wp bzmn backup [--type=<type>] [--porcelain]
 
     # Make a quick (database) backup, outputting only the filename.
     wp bzmn backup --type=quick --porcelain
+
+    # Make a quick (database) backup, forcibly deactivating the plugins afterwards.
+    wp bzmn backup --type=quick --force-plugin-deactivation
 
 
 
