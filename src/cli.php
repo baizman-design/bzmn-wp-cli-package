@@ -690,6 +690,11 @@ final class cli {
 				),
 			);
 			WP_CLI::log(
+				message: sprintf( 'Site type: %1$s',
+					is_multisite() ? 'Network' : 'Singleton',
+				),
+			);
+			WP_CLI::log(
 				message: 'Starting backup...',
 			);
 		}
