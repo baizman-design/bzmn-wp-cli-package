@@ -533,7 +533,7 @@ final class cli {
 	 *     # Make a quick (database) backup, outputting only the filename.
 	 *     wp bzmn backup --type=quick --porcelain
 	 *
-	 *     # Make a quick (database) backup, forcibly deactivating the plugins afterwards.
+	 *     # Make a quick (database) backup, forcibly deactivating the plugins afterward.
 	 *     wp bzmn backup --type=quick --force-plugin-deactivation
 	 *
      * @subcommand backup
