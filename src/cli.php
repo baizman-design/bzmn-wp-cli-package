@@ -706,6 +706,8 @@ final class cli {
 			],
 			defaults: $runcommand_option_defaults,
 		);
+		$attempt = 1;
+		backup:
 		$backup_command_return_message = WP_CLI::runcommand(
 			command: sprintf( '%1$s backup %2$s',
 				$this->ai1wm_command,
@@ -714,13 +716,46 @@ final class cli {
 			options: $backup_command_return_options,
 		);
 		if ( $backup_command_return_message->return_code == '1' ) {
-			if ( $backup_command_return_message->stdout ) {
-				WP_CLI::error(
-					message: $backup_command_return_message->stdout,
-					exit: false,
-				);
+			// only display the error message after the first attempt.
+			if ( $attempt > 1 ) {
+				if ( $backup_command_return_message->stdout ) {
+					WP_CLI::error(
+						message: $backup_command_return_message->stdout,
+						exit: false,
+					);
+				}
 			}
 			if ( $backup_command_return_message->stderr ) {
+				if ( str_contains( haystack: $backup_command_return_message->stderr, needle: 'Please update this extension' ) ) {
+					if ( ! $porcelain ) {
+						WP_CLI::log('The Multisite Extension is out-of-date. Attempting to update it...');
+					}
+					$update_plugin_command_return_options = $backup_command_return_options;
+					$update_plugin_command_return_message = WP_CLI::runcommand(
+						command: sprintf( 'plugin update %1$s',
+							$this->get_plugin_dirs()[1],
+						),
+						options: $update_plugin_command_return_options,
+					);
+					if ( $update_plugin_command_return_message->return_code == '0' ) {
+						// success. run the backup command again.
+						$attempt++;
+						goto backup;
+					} else {
+						if ( $update_plugin_command_return_message->stdout ) {
+							WP_CLI::error(
+								message: $update_plugin_command_return_message->stdout,
+								exit: false,
+							);
+						}
+						WP_CLI::log(
+							message: $update_plugin_command_return_message->stderr,
+						);
+						WP_CLI::halt(
+							return_code: 1,
+						);
+					}
+				}
 				WP_CLI::log(
 					message: $backup_command_return_message->stderr,
 				);
