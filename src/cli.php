@@ -874,7 +874,6 @@ final class cli {
 				),
 			);
 		}
-		$ai1wm_plugins = $this->get_plugin_dirs();
 		$this->plugin_presence_check();
 		// determine whether the plugins need to be activated.
 		$plugins_need_to_be_activated = false;
@@ -904,6 +903,7 @@ final class cli {
 			'exit_error' => true, // halt script execution on error.
 			'command_args' => [ sprintf( '--path=%1$s', $wp_path ), ], // add path (necessary when an alias is used).
 		];
+		$ai1wm_plugins = $this->get_plugin_dirs();
 		// is this a multisite installation? if so, add flag for activate / deactivate commands.
 		$network_flag = is_multisite() ? '--network' : '';
 		if ( $plugins_need_to_be_activated ) {
@@ -912,7 +912,6 @@ final class cli {
 				runcommand_option_defaults: $runcommand_option_defaults,
 				network_flag: $network_flag,
 			);
-			// TODO (maybe): remove has_command() method, which is used only once, and refactor below.
 			$has_command_return_options['launch'] = true;
 			$this->has_command(
 				command_name: $this->ai1wm_command,
