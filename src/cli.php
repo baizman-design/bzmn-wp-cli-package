@@ -691,7 +691,7 @@ final class cli {
 			);
 			WP_CLI::log(
 				message: sprintf( 'Site type: %1$s',
-					is_multisite() ? 'Network' : 'Singleton',
+					is_multisite() ? 'network' : 'singleton',
 				),
 			);
 			WP_CLI::log(
