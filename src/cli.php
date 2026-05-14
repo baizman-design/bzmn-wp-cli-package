@@ -618,12 +618,8 @@ final class cli {
 			'exclude-cache',
 			'exclude-email-replace',
 		];
-		// prepend double-dash to all quick backup arguments.
-		$quick_backup_args = array_map(
-			callback: fn ( $arg ) => sprintf( '--%1$s',
-				$arg,
-			),
-			array: $quick_backup_args,
+		$quick_backup_args = $this->_prepend_dashes(
+			elements: $quick_backup_args,
 		);
 		// default parameters to WP_CLI::runcommand().
 		$runcommand_option_defaults = [
@@ -1048,7 +1044,7 @@ final class cli {
 			message: $message,
 		);
 		// https://waf.sucuri.net/?settings&site=lifetimearts.org&panel=api
-		$response = wp_remote_post (
+		$response = wp_remote_post(
 			url: 'https://waf.sucuri.net/api?v2',
 			args: [
 				'body' => $data,
@@ -1099,15 +1095,15 @@ final class cli {
 	 * @alias clear_cloudflare_cache
 	 */
 	public function clear_cloudflare_cache(
-		$args = [],
-		$assoc_args = [],
+		array $args = [],
+		array $assoc_args = [],
 	):void
 	{
 		list( $zone_id, ) = $args;
 		$api_key = getenv(
 			name: 'CLOUDFLARE_API_KEY',
 		);
-		if ( ! $api_key) {
+		if ( ! $api_key ) {
 			WP_CLI::error(
 				message: 'Environment variable $CLOUDFLARE_API_KEY is missing.',
 			);
@@ -1167,9 +1163,12 @@ final class cli {
 	}
 
 	/**
-	 * Display the disk usage of WP_CONTENT_DIR.
+	 * Display the disk usage of WP_CONTENT_DIR and (optionally) the database.
 	 *
 	 * ## OPTIONS
+	 *
+	 * [--include-database]
+	 * : Include the sizes of database tables.
 	 *
 	 * [--sort-by=<field>]
 	 * : Sort directories in each subsection alphabetically or by size. Options: name, size. Default: name.
@@ -1189,14 +1188,19 @@ final class cli {
 	 * @alias du
 	 */
 	public function disk_usage(
-		$args = [],
-		$assoc_args = [],
+		array $args = [],
+		array $assoc_args = [],
 	):void
 	{
 		$sort_by = WP_CLI\Utils\get_flag_value(
 			assoc_args: $assoc_args,
 			flag: 'sort-by',
 			default: 'name', // directory name.
+		);
+		$include_database = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'include-database',
+			default: false,
 		);
 		// section labels.
 		$core_label = __( text: 'Core Directories' );
@@ -1372,6 +1376,19 @@ final class cli {
 			items: $totals,
 			fields: array_keys( array: $totals[0] ),
 		);
+		// add database size, if requested.
+		if ( $include_database ) {
+			$database_disk_usage = $this->get_database_disk_usage();
+			$database_totals[] = [
+				'Database' => DB_NAME ?? '[unknown]',
+				'Size' => sprintf( '%1$dM', $database_disk_usage->stdout),
+			];
+			WP_CLI\Utils\format_items(
+				format: 'table',
+				items: $database_totals,
+				fields: array_keys( array: $database_totals[0] ),
+			);
+		}
 	}
 
 	/**
@@ -1730,6 +1747,61 @@ final class cli {
 	}
 
 	/**
+	 * Get database disk usage.
+	 *
+	 * @return int|mixed|object|null
+	 * @throws ExitException
+	 */
+	private function get_database_disk_usage ()
+	{
+		$runcommand_options = [
+			'return'     => 'all',  // capture and return output.
+			'launch'     => false, // reuse the current process.
+			'exit_error' => false, // halt script execution on error.
+		];
+		// $arguments = ['tables'];
+		$arguments = ['size_format=mb',];
+		$return = WP_CLI::runcommand(
+			command: sprintf( 'db size %1$s',
+				implode(
+					separator: ' ',
+					array: $this->_prepend_dashes(
+						elements: $arguments,
+					),
+				),
+			),
+			options: $runcommand_options,
+		);
+		WP_CLI::debug(
+			message: sprintf( '$return->return_code: %1$s',
+				$return->return_code,
+			),
+		);
+		// something went wrong.
+		if ( $return->return_code == '1' ) {
+			WP_CLI::error(
+				message: 'the size of the database could not be obtained.',
+				exit: false,
+			);
+			if ( $return->stdout ) {
+				WP_CLI::error(
+					message: $return->stdout,
+					exit: false,
+				);
+			}
+			if ( $return->stderr ) {
+				WP_CLI::log(
+					message: $return->stderr,
+				);
+			}
+			WP_CLI::halt(
+				return_code: 1,
+			);
+		}
+		return $return;
+	}
+
+	/**
 	 * Get the disk usage of the subdirectories of a given directory.
 	 *
 	 * @param string $directory
@@ -1782,7 +1854,7 @@ final class cli {
 		if ( $os == 'Darwin' ) {
 			$du_multiplier = 512;
 		}
-		list ( $amount, $unit ) = explode(
+		list( $amount, $unit ) = explode(
 			separator: ' ',
 			string: size_format(
 				bytes: $size * $du_multiplier,
@@ -1792,6 +1864,27 @@ final class cli {
 		return sprintf( '%1$s%2$s',
 			$amount,
 			$unit[0], // get first character.
+		);
+	}
+
+	/**
+	 * Prepend double-dashes to every element in an array. For sets of arguments.
+	 *
+	 * @param array $elements
+	 *
+	 * @return array
+	 */
+	private function _prepend_dashes(
+		array $elements,
+	):array
+	{
+		$prefix = '--';
+		return array_map(
+			callback: fn ( $element ) => sprintf( '%2$s%1$s',
+				$element,
+				$prefix,
+			),
+			array: $elements,
 		);
 	}
 
