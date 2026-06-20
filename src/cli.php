@@ -1392,6 +1392,78 @@ final class cli {
 	}
 
 	/**
+	 * Correct the taxonomy term counts.
+	 *
+	 * ## OPTIONS
+	 *
+	 * <taxonomy>
+	 * : Taxonomy slug
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp bzmn correct-taxonomy-term-counts service
+	 *
+	 * @subcommand correct-taxonomy-term-counts
+	 */
+	public function correct_taxonomy_term_counts(
+		array $args = [],
+		array $assoc_args = [],
+	):void
+	{
+		// TODO: add confirmation and backup database beforehand.
+		list( $taxonomy, ) = $args;
+		$terms = get_terms(
+			args: [
+				'taxonomy' => $taxonomy,
+			    'hide_empty' => false, // include all terms.
+			],
+		);
+		if ( is_wp_error( $terms ) ) {
+			WP_CLI::error(
+				message: sprintf( 'The taxonomy "%1$s" does not exist.',
+					$taxonomy,
+				),
+			);
+		}
+
+		$this->backup_database();
+
+		$term_counter = 0;
+		array_walk(
+			array: $terms,
+			callback: function ( object $term ) use ( $taxonomy, &$term_counter ) {
+				WP_CLI::log(
+					message: sprintf( 'Updating the term count for "%1$s"...',
+						$term->name,
+					),
+				);
+				$return = wp_update_term_count_now(
+					terms: [$term->term_id,],
+					taxonomy: $taxonomy,
+				);
+				if ( $return ) {
+					WP_CLI::log(
+						message: '...done.'
+					);
+				} else {
+					WP_CLI::warning(
+						message: sprintf( 'Failed to update the term count for "%1$s".',
+							$term->name,
+						)
+					);
+				}
+				$term_counter++;
+			}
+		);
+		WP_CLI::success(
+			message: sprintf( 'Updated %2$d term counts for the "%1$s" taxonomy.',
+				$taxonomy,
+				$term_counter,
+			),
+		);
+	}
+
+	/**
 	 * Create a MySQL dump of the database.
 	 *
 	 * @param string $file

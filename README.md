@@ -100,7 +100,7 @@ wp bzmn backup [--type=<type>] [--porcelain] [--force-plugin-deactivation]
     # Make a quick (database) backup, outputting only the filename.
     wp bzmn backup --type=quick --porcelain
 
-    # Make a quick (database) backup, forcibly deactivating the plugins afterwards.
+    # Make a quick (database) backup, forcibly deactivating the plugins afterward.
     wp bzmn backup --type=quick --force-plugin-deactivation
 
 
@@ -151,6 +151,25 @@ wp bzmn clear-sucuri-cache [<filename>]
 
 
 
+### wp bzmn correct-taxonomy-term-counts
+
+Correct the taxonomy term counts.
+
+~~~
+wp bzmn correct-taxonomy-term-counts <taxonomy>
+~~~
+
+**OPTIONS**
+
+	<taxonomy>
+		Taxonomy slug
+
+**EXAMPLES**
+
+    wp bzmn correct-taxonomy-term-counts service
+
+
+
 ### wp bzmn delete-woocommerce-transients
 
 Delete WooCommerce payment field style transients.
@@ -169,13 +188,16 @@ wp bzmn delete-woocommerce-transients
 
 ### wp bzmn disk-usage
 
-Display the disk usage of WP_CONTENT_DIR.
+Display the disk usage of WP_CONTENT_DIR and (optionally) the database.
 
 ~~~
-wp bzmn disk-usage [--sort-by=<field>]
+wp bzmn disk-usage [--include-database] [--sort-by=<field>]
 ~~~
 
 **OPTIONS**
+
+	[--include-database]
+		Include the sizes of database tables.
 
 	[--sort-by=<field>]
 		Sort directories in each subsection alphabetically or by size. Options: name, size. Default: name.
