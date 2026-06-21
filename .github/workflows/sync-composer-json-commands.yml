@@ -23,7 +23,7 @@ jobs:
     timeout-minutes: 3
     steps:
       - name: check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: check php version
         run: php -v
       - name: run bin/sync-composer-json-commands.php

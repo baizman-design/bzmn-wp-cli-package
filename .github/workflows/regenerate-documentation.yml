@@ -30,7 +30,7 @@ jobs:
         password: ${{ secrets.BD_ACCESS_TOKEN }}
     steps:
       - name: check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: generate the command's documentation
         run: |
           composer dump-autoload
