@@ -35,6 +35,10 @@
     "support": {
         "issues": "https://github.com/baizman-design/bzmn-wp-cli-package/issues"
     },
+    "scripts": {
+        "sync-json": "php bin/sync-composer-json-commands.php",
+        "local-dev": "open -a docker.app && sleep 10 && sh bin/local-dev.sh"
+    },
     "extra": {
         "commands": [
             "bzmn",
