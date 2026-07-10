@@ -536,8 +536,8 @@ final class cli {
 	 *     # Make a quick (database) backup, forcibly deactivating the plugins afterward.
 	 *     wp bzmn backup --type=quick --force-plugin-deactivation
 	 *
-     * @subcommand backup
-     * @alias bu
+	 * @subcommand backup
+	 * @alias bu
 	 */
 	public function backup(
 		array $args = [],
@@ -559,6 +559,13 @@ final class cli {
 			flag: 'force-plugin-deactivation',
 			default: false,
 		);
+		if ( ! $porcelain ) {
+			WP_CLI::log(
+				message: sprintf( 'Initiating a %1$s backup...',
+					$type, // 1
+				),
+			);
+		}
 		// set class property. needed when backup_database() is called.
 		$this->porcelain = $porcelain;
 		// mysql dump.
