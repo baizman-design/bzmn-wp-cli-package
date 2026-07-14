@@ -898,7 +898,7 @@ final class cli {
 				$plugins_need_to_be_activated ? 'true' : 'false',
 			),
 		);
-		$wp_path = WP_CLI::get_config( key: 'path' ) ?? '.';
+		$wp_path = WP_CLI::get_config( key: 'path' ) ?? ABSPATH;
 		// default parameters to WP_CLI::runcommand().
 		$runcommand_option_defaults = [
 			'return' => true,  // capture and return output.
