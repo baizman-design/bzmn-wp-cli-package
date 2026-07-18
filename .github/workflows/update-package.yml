@@ -42,6 +42,7 @@ jobs:
           chmod +x /usr/local/bin/wp
       - name: update package on remote hosts
         run: |
+          failed="false"
           remote_hosts="${{ env.repo_remote_hosts }}"
           for remote_host in ${remote_hosts//$'\r'/''}
           do
@@ -51,7 +52,13 @@ jobs:
           if [ ${return} -ne 0 ]
           then
           echo "**ERROR:** \`wp @${remote_host} package update\` failed." | tee -a ${{ env.logfile }}
+          failed="true"
           fi
           done
           cat ${{ env.logfile }} >> ${GITHUB_STEP_SUMMARY}
           rm -f ${{ env.logfile }}
+          # if any of the updates failed, issue an error notification.
+          if [ "$http_failure" == "true" ]
+          then
+          exit 1
+          fi
