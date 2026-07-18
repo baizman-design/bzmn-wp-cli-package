@@ -15,6 +15,10 @@ on:
 env:
   repo_remote_hosts: ${{ vars.REPO_REMOTE_HOSTS }}
   logfile: /tmp/log.txt
+  green: 00dd00
+  red: dd0000
+  gray: bdbdbd
+  orange: e67e27
 
 jobs:
   update-package:
@@ -51,14 +55,14 @@ jobs:
           return=${PIPESTATUS[0]}
           if [ ${return} -ne 0 ]
           then
-          echo "**ERROR:** \`wp @${remote_host} package update\` failed." | tee -a ${{ env.logfile }}
+          echo "![${{ env.red }}](https://placeholder.baizmandesign.com/placeholder.php?format=png&color=${{ env.red }}&shape=circle) **ERROR:** \`wp @${remote_host} package update\` failed." | tee -a ${{ env.logfile }}
           failed="true"
           fi
           done
           cat ${{ env.logfile }} >> ${GITHUB_STEP_SUMMARY}
           rm -f ${{ env.logfile }}
           # if any of the updates failed, issue an error notification.
-          if [ "$http_failure" == "true" ]
+          if [ "$failed" == "true" ]
           then
           exit 1
           fi
