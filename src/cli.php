@@ -61,7 +61,7 @@ final class cli {
 		flush_rewrite_rules( hard: $hard );
 		WP_CLI::success (
 			message: sprintf( 'The rewrite rules have been %1$s-flushed.',
-				$hard ? 'hard' : 'soft',
+				$hard ? 'hard' : 'soft', // 1
 			),
 		);
 	}
@@ -102,8 +102,8 @@ final class cli {
 		$prefix = $porcelain ? '' : 'environment: ';
 		WP_CLI::log(
 			message: sprintf( '%1$s%2$s',
-				$prefix,
-				wp_get_environment_type(),
+				$prefix, // 1
+				wp_get_environment_type(), // 2
 			),
 		);
 	}
@@ -256,8 +256,9 @@ final class cli {
 				);
 
 				if ( $current_pagination_value == $pagination ) {
-					WP_CLI::warning(sprintf('The pagination is already set to "%1$s."',
-						$pagination,
+					WP_CLI::warning(
+						message: sprintf( 'The pagination is already set to "%1$s."',
+							$pagination, // 1
 					));
 					exit;
 				}
@@ -271,19 +272,22 @@ final class cli {
 				if ( $return === false ) {
 					// if the pagination value is already set, and is being set to the same value,
 					// this will return false, which is not a true failure.
-					WP_CLI::error( sprintf( 'The pagination for "%1$s" could not be set.',
-						$email,
+					WP_CLI::error(
+						message: sprintf( 'The pagination for "%1$s" could not be set.',
+							$email, // 1
 					));
 				} else {
-					WP_CLI::success( sprintf( 'The pagination for "%1$s" was set to "%2$s."',
-						$email,
-						$pagination,
-					));
+					WP_CLI::success(
+						message: sprintf( 'The pagination for "%1$s" was set to "%2$s."',
+							$email, // 1
+							$pagination, // 2
+						),
+					);
 				}
 			} else {
 				WP_CLI::error(
 					message: sprintf( 'The user "%1$s" is not a valid user.',
-						$email,
+						$email, // 1
 					),
 				);
 			}
@@ -396,25 +400,31 @@ final class cli {
 
 		if ( $post_count > 0 ) {
 			if ( ! $this->dry_run ) {
-				WP_CLI::confirm( sprintf( 'Are you sure you want to update %1$d posts?',
-					$post_count,
-				) );
+				WP_CLI::confirm(
+					question: sprintf( 'Are you sure you want to update %1$d posts?',
+						$post_count, // 1
+					),
+				);
 			}
 
 			$this->backup_database();
 
-			WP_CLI::log(sprintf('Setting "%1$s" to "%2$s" for post type "%3$s"...',
-				$field,
-				$value,
-				$post_type,
-			));
+			WP_CLI::log(
+				message: sprintf( 'Setting "%1$s" to "%2$s" for post type "%3$s"...',
+					$field, // 1
+					$value, // 2
+					$post_type, // 3
+				),
+			);
 			$post_counter = 1;
 			foreach ( $posts->posts as $post_id ) {
-				WP_CLI::log( sprintf( 'Updating post ID %1$d (%2$d/%3$d)...',
-					$post_id,
-					$post_counter,
-					$post_count,
-				));
+				WP_CLI::log(
+					message: sprintf( 'Updating post ID %1$d (%2$d/%3$d)...',
+						$post_id, // 1
+						$post_counter, // 2
+						$post_count, // 3
+					),
+				);
 				// update the post meta data.
 				if ( ! $this->dry_run ) {
 					update_post_meta(
@@ -428,13 +438,13 @@ final class cli {
 			if ( ! $this->dry_run ) {
 				WP_CLI::success(
 					message: sprintf( '%1$d posts were updated.',
-						$post_counter-1,
+						$post_counter-1, // 1
 					),
 				);
 			} else {
 				WP_CLI::log(
 					message: sprintf( '%1$d posts were not updated.',
-						$post_counter-1,
+						$post_counter-1, // 1
 					),
 				);
 			}
@@ -442,7 +452,7 @@ final class cli {
 			// zero posts found.
 			WP_CLI::error(
 				message: sprintf('There were no posts for the post type "%1$s."',
-					$post_type,
+					$post_type, // 1
 				),
 			);
 		}
@@ -561,20 +571,20 @@ final class cli {
 		);
 		if ( ! $porcelain ) {
 			WP_CLI::log(
-				message: sprintf( 'Initiating a %1$s backup...',
-					$type, // 1
-				),
+				message: 'Initiating backup...',
 			);
 		}
 		// set class property. needed when backup_database() is called.
 		$this->porcelain = $porcelain;
 		// mysql dump.
 		if ( $type == 'sql' ) {
-			$this->backup_database( file: sprintf('%1$s/%2$s-%3$s-export.sql',
-				untrailingslashit( ABSPATH ),
-				DB_NAME,
-				date( 'YmdHis' ),
-			));
+			$this->backup_database(
+				file: sprintf( '%1$s/%2$s-%3$s-export.sql',
+					untrailingslashit( ABSPATH ), // 1
+					DB_NAME, // 2
+					current_datetime()->format( format: 'YmdHis' ), // 3
+				),
+			);
 			if ( ! $porcelain ) {
 				WP_CLI::success(
 					message: sprintf('%1$s backup succeeded.',
@@ -613,27 +623,30 @@ final class cli {
 			key: 'path',
 		) ?? ABSPATH;
 		// arguments for quick backup, sans leading double-dashes ("--").
-		$quick_backup_args = [
-			'exclude-spam-comments',
-			'exclude-post-revisions',
-			'exclude-media',
-			'exclude-themes',
-			'exclude-inactive-themes',
-			'exclude-muplugins',
-			'exclude-plugins',
-			'exclude-inactive-plugins',
-			'exclude-cache',
-			'exclude-email-replace',
-		];
-		$quick_backup_args = $this->_prepend_dashes(
-			elements: $quick_backup_args,
+		$quick_backup_args = $this->_prepend_string(
+			elements: [
+				'exclude-spam-comments',
+				'exclude-post-revisions',
+				'exclude-media',
+				'exclude-themes',
+				'exclude-inactive-themes',
+				'exclude-muplugins',
+				'exclude-plugins',
+				'exclude-inactive-plugins',
+				'exclude-cache',
+				'exclude-email-replace',
+			],
 		);
 		// default parameters to WP_CLI::runcommand().
 		$runcommand_option_defaults = [
 			'return' => true,  // capture and return output.
 			'launch' => false, // reuse the current process.
 			'exit_error' => true, // halt script execution on error.
-			'command_args' => [ sprintf( '--path=%1$s', $wp_path ), ], // add path (necessary when an alias is used).
+			'command_args' => [
+				sprintf( '--path=%1$s',
+					$wp_path, // 1
+				),
+			], // add path (necessary when an alias is used).
 		];
 		// is this a multisite installation? if so, add flag for activate / deactivate commands.
 		$network_flag = is_multisite() ? '--network' : '';
@@ -655,13 +668,9 @@ final class cli {
 				command_name: $this->ai1wm_command,
 				runcommand_options: $has_command_return_options,
 			);
-			if ( ! $porcelain ) {
-				WP_CLI::log(
-					message: sprintf( '%1$s',
-						$plugin_activate_message->stdout,
-					),
-				);
-			}
+			WP_CLI::debug(
+				message: $plugin_activate_message->stdout,
+			);
 		} else {
 			if ( ! $porcelain ) {
 				WP_CLI::warning(
@@ -669,7 +678,7 @@ final class cli {
 						implode(
 							separator: ' and ',
 							array: $ai1wm_plugins,
-						),
+						), // 1
 					),
 				);
 			}
@@ -684,21 +693,21 @@ final class cli {
 		if ( ! $porcelain ) {
 			WP_CLI::log(
 				message: sprintf( 'Backup type: %1$s',
-					$type,
+					$type, // 1
 				),
 			);
 			WP_CLI::log(
 				message: sprintf( 'Backup site: %1$s',
-					get_site_url(),
+					get_site_url(), // 1
 				),
 			);
 			WP_CLI::log(
 				message: sprintf( 'Site type: %1$s',
-					is_multisite() ? 'network' : 'singleton',
+					is_multisite() ? 'network' : 'singleton', // 1
 				),
 			);
 			WP_CLI::log(
-				message: 'Starting backup...',
+				message: 'Running backup...',
 			);
 		}
 		$backup_command_return_options = wp_parse_args (
@@ -713,8 +722,8 @@ final class cli {
 		backup:
 		$backup_command_return_message = WP_CLI::runcommand(
 			command: sprintf( '%1$s backup %2$s',
-				$this->ai1wm_command,
-				$ai1wm_command_arguments,
+				$this->ai1wm_command, // 1
+				$ai1wm_command_arguments, // 2
 			),
 			options: $backup_command_return_options,
 		);
@@ -731,7 +740,9 @@ final class cli {
 			if ( $backup_command_return_message->stderr ) {
 				if ( str_contains( haystack: $backup_command_return_message->stderr, needle: 'Please update this extension' ) ) {
 					if ( ! $porcelain ) {
-						WP_CLI::log('The Multisite Extension is out-of-date. Attempting to update it...');
+						WP_CLI::log(
+							message: 'The Multisite Extension is out-of-date. Attempting to update it...',
+						);
 					}
 					$update_plugin_command_return_options = $backup_command_return_options;
 					$update_plugin_command_return_message = WP_CLI::runcommand(
@@ -795,21 +806,17 @@ final class cli {
 				runcommand_option_defaults: $runcommand_option_defaults,
 				network_flag: $network_flag,
 			);
-			if ( ! $porcelain ) {
-				WP_CLI::log(
-					message: sprintf( '%1$s',
-						$plugin_deactivate_message->stdout,
-					),
-				);
-			}
+			WP_CLI::debug(
+				message: $plugin_deactivate_message->stdout,
+			);
 		} else {
 			if ( ! $porcelain ) {
 				WP_CLI::warning(
-					message: sprintf( 'The %s plugins were already active and have not been deactivated.',
+					message: sprintf( 'The %1$s plugins were already active and have not been deactivated.',
 						implode(
 							separator: ' and ',
 							array: $ai1wm_plugins,
-						),
+						), // 1
 					),
 				);
 			}
@@ -817,7 +824,9 @@ final class cli {
 		if ( ! $porcelain ) {
 			WP_CLI::success(
 				message: sprintf( '%1$s backup succeeded.',
-					ucfirst( $type ),
+					ucfirst(
+						string: $type,
+					), // 1
 				),
 			);
 		}
@@ -849,7 +858,7 @@ final class cli {
 		$wpress_backup_file = basename( path: $wpress_backup_file );
 		WP_CLI::debug(
 			message: sprintf( '$wpress_backup_file: %1$s',
-				$wpress_backup_file,
+				$wpress_backup_file, // 1
 			)
 		);
 		$ai1wm_path_option_name = 'ai1wm_backups_path';
@@ -859,21 +868,21 @@ final class cli {
 		);
 		if ( $ai1wm_path ) {
 			$ai1wm_backup_full_path = sprintf( '%1$s/%2$s',
-				$ai1wm_path,
-				$wpress_backup_file,
+				$ai1wm_path, // 1
+				$wpress_backup_file, // 2
 			);
 			if ( ! file_exists( filename: $ai1wm_backup_full_path ) ) {
 				WP_CLI::error(
 					message: sprintf( 'The backup file "%1$s" in the backup directory "%2$s" does not exist.',
-						$wpress_backup_file,
-						$ai1wm_path,
+						$wpress_backup_file, // 1
+						$ai1wm_path, // 2
 					),
 				);
 			}
 		} else {
 			WP_CLI::error(
 				message: sprintf( 'The database option with the backup directory location, "%1$s," does not exist.',
-					$ai1wm_path_option_name,
+					$ai1wm_path_option_name, // 1
 				),
 			);
 		}
@@ -884,8 +893,8 @@ final class cli {
 			$is_plugin_active = is_plugin_active( $plugin );
 			WP_CLI::debug(
 				message: sprintf( '%1$s is active: %2$s',
-					$plugin,
-					$is_plugin_active ? 'true' : 'false',
+					$plugin, // 1
+					$is_plugin_active ? 'true' : 'false', // 2
 				)
 			);
 			if ( ! $is_plugin_active ) {
@@ -895,7 +904,7 @@ final class cli {
 		}
 		WP_CLI::debug(
 			message: sprintf( '$plugins_need_to_be_activated: %1$s',
-				$plugins_need_to_be_activated ? 'true' : 'false',
+				$plugins_need_to_be_activated ? 'true' : 'false', // 1
 			),
 		);
 		$wp_path = WP_CLI::get_config(
@@ -906,7 +915,11 @@ final class cli {
 			'return' => true,  // capture and return output.
 			'launch' => false, // reuse the current process.
 			'exit_error' => true, // halt script execution on error.
-			'command_args' => [ sprintf( '--path=%1$s', $wp_path ), ], // add path (necessary when an alias is used).
+			'command_args' => [
+				sprintf( '--path=%1$s',
+					$wp_path, // 1
+				),
+			], // add path (necessary when an alias is used).
 		];
 		$ai1wm_plugins = $this->get_plugin_dirs();
 		// is this a multisite installation? if so, add flag for activate / deactivate commands.
@@ -922,10 +935,8 @@ final class cli {
 				command_name: $this->ai1wm_command,
 				runcommand_options: $has_command_return_options,
 			);
-			WP_CLI::log(
-				message: sprintf( '%1$s',
-					$plugin_activate_message->stdout,
-				),
+			WP_CLI::debug(
+				message: $plugin_activate_message->stdout,
 			);
 		} else {
 			WP_CLI::warning(
@@ -938,7 +949,7 @@ final class cli {
 			);
 		}
 		$ai1wm_command_arguments = sprintf( '--yes %1$s',
-			$wpress_backup_file,
+			$wpress_backup_file, // 1
 		);
 		$restore_command_return_options = wp_parse_args (
 			args: [
@@ -948,21 +959,19 @@ final class cli {
 		);
 		WP_CLI::log(
 			message: sprintf( 'Restoring %1$s from %2$s...',
-				get_site_url(),
-				$wpress_backup_file,
+				get_site_url(), // 1
+				$wpress_backup_file, // 2
 			),
 		);
 		$return_message = WP_CLI::runcommand(
 			command: sprintf( '%1$s restore %2$s',
-				$this->ai1wm_command,
-				$ai1wm_command_arguments,
+				$this->ai1wm_command, // 1
+				$ai1wm_command_arguments, // 2
 			),
 			options: $restore_command_return_options,
 		);
 		WP_CLI::log(
-			message: sprintf( '%1$s',
-				$return_message,
-			),
+			message: $return_message,
 		);
 		// don't deactivate the plugins if they were already active.
 		if ( $plugins_need_to_be_activated ) {
@@ -971,18 +980,16 @@ final class cli {
 				runcommand_option_defaults: $runcommand_option_defaults,
 				network_flag: $network_flag,
 			);
-			WP_CLI::log(
-				message: sprintf( '%1$s',
-					$plugin_deactivate_message->stdout,
-				),
+			WP_CLI::debug(
+				message: $plugin_deactivate_message->stdout,
 			);
 		} else {
 			WP_CLI::warning(
-				message: sprintf('The %1$s plugins were already active and have not been deactivated.',
+				message: sprintf( 'The %1$s plugins were already active and have not been deactivated.',
 					implode(
 						separator: ' and ',
 						array: $ai1wm_plugins,
-					),
+					), // 1
 				),
 			);
 		}
@@ -1042,7 +1049,7 @@ final class cli {
 		if ( $filename ) {
 			$data['file'] = $filename;
 			$message .= sprintf(' "%1$s"',
-				$filename,
+				$filename, // 1
 			);
 		} else {
 			$message .= ' the entire domain';
@@ -1121,7 +1128,7 @@ final class cli {
 			'purge_everything' => true,
 		];
 		$clear_cache_url = sprintf( 'https://api.cloudflare.com/client/v4/zones/%1$s/purge_cache',
-			$zone_id,
+			$zone_id, // 1
 		);
 		// the body must be JSON. see https://community.cloudflare.com/t/purge-everything-api-is-not-working/387799.
 		$body = json_encode(
@@ -1132,7 +1139,7 @@ final class cli {
 			'body' => $body,
 			'headers' => [
 				'Authorization' => sprintf( 'Bearer %1$s',
-					$api_key,
+					$api_key, // 1
 				),
 				'Content-Type' => 'application/json',
 			],
@@ -1156,7 +1163,7 @@ final class cli {
 					print_r(
 						value: $response,
 						return: true
-					),
+					), // 1
 				),
 			);
 		}
@@ -1228,7 +1235,7 @@ final class cli {
 		if ( ! in_array ( needle: $os, haystack: $supported_systems ) ) {
 			WP_CLI::error(
 				message: sprintf( '"%1$s" is not a supported OS for this command.',
-					$os,
+					$os, // 1
 				),
 			);
 		}
@@ -1370,7 +1377,7 @@ final class cli {
 		// sum the total.
 		$totals[] = [
 			$total_label => sprintf('Sum total in "%1$s"',
-				basename( path: WP_CONTENT_DIR ),
+				basename( path: WP_CONTENT_DIR ), // 1
 			),
 			'Size' => $this->_reformat_size_format(
 				size: array_sum(
@@ -1390,12 +1397,16 @@ final class cli {
 			$database_disk_usage = $this->get_database_disk_usage();
 			$database_totals[] = [
 				'Database' => DB_NAME ?? '[unknown]',
-				'Size' => sprintf( '%1$dM', $database_disk_usage->stdout),
+				'Size' => sprintf( '%1$dM',
+					$database_disk_usage->stdout, // 1
+				),
 			];
 			WP_CLI\Utils\format_items(
 				format: 'table',
 				items: $database_totals,
-				fields: array_keys( array: $database_totals[0] ),
+				fields: array_keys(
+					array: $database_totals[0],
+				),
 			);
 		}
 	}
@@ -1430,7 +1441,7 @@ final class cli {
 		if ( is_wp_error( $terms ) ) {
 			WP_CLI::error(
 				message: sprintf( 'The taxonomy "%1$s" does not exist.',
-					$taxonomy,
+					$taxonomy, // 1
 				),
 			);
 		}
@@ -1443,7 +1454,7 @@ final class cli {
 			callback: function ( object $term ) use ( $taxonomy, &$term_counter ) {
 				WP_CLI::log(
 					message: sprintf( 'Updating the term count for "%1$s"...',
-						$term->name,
+						$term->name, // 1
 					),
 				);
 				$return = wp_update_term_count_now(
@@ -1457,7 +1468,7 @@ final class cli {
 				} else {
 					WP_CLI::warning(
 						message: sprintf( 'Failed to update the term count for "%1$s".',
-							$term->name,
+							$term->name, // 1
 						)
 					);
 				}
@@ -1466,8 +1477,8 @@ final class cli {
 		);
 		WP_CLI::success(
 			message: sprintf( 'Updated %2$d term counts for the "%1$s" taxonomy.',
-				$taxonomy,
-				$term_counter,
+				$taxonomy, // 1
+				$term_counter, // 2
 			),
 		);
 	}
@@ -1503,7 +1514,7 @@ final class cli {
 			}
 			$output = WP_CLI::runcommand(
 				command: sprintf( 'db export %1$s --porcelain',
-					$file,
+					$file, // 1
 				),
 				options: $runcommand_options,
 			);
@@ -1527,7 +1538,7 @@ final class cli {
 			if ( ! $this->porcelain ) {
 				WP_CLI::log(
 					message: sprintf( 'Backup filename: %1$s',
-						$output->stdout,
+						$output->stdout, // 1
 					),
 				);
 				WP_CLI::log(
@@ -1564,25 +1575,25 @@ final class cli {
 		// check that the two required plugins are present.
 		$return_code = WP_CLI::runcommand(
 			command: sprintf( 'cli has-command %1$s',
-				$command_name,
+				$command_name, // 1
 			),
 			options: $runcommand_options,
 		);
 		WP_CLI::debug(
 			message: sprintf( '$return_code: %1$s',
-				$return_code,
+				$return_code, // 1
 			),
 		);
 		$has_command = ! ( $return_code == '1' );
 		WP_CLI::debug(
 			message: sprintf( '$has_command: %1$s',
-				$has_command ? 'true' : 'false',
+				$has_command ? 'true' : 'false', // 1
 			),
 		);
 		if ( ! $has_command ) {
 			WP_CLI::error(
 				message: sprintf( 'the "%1$s" command could not be found.',
-					$command_name,
+					$command_name, // 1
 				),
 			);
 		}
@@ -1713,14 +1724,14 @@ final class cli {
 					implode(
 						separator: ' and ',
 						array: $plugin_presence_check,
-					),
+					), // 1
 					// conditional plural.
 					WP_CLI\Utils\pluralize(
 						noun: 'plugin',
 						count: count( $plugin_presence_check ),
-					),
+					), // 2
 					// single or plural verb.
-					count( $plugin_presence_check ) == 1 ? 'is': 'are',
+					count( $plugin_presence_check ) == 1 ? 'is': 'are', // 3
 				),
 			);
 		}
@@ -1761,7 +1772,7 @@ final class cli {
 		// get current setting.
 		$current_value = WP_CLI::runcommand(
 			command: sprintf( 'config get %1$s',
-				$constant,
+				$constant, // 1
 			),
 			options: $runcommand_options,
 		);
@@ -1769,7 +1780,7 @@ final class cli {
 		if ( $current_value->return_code == '1' ) {
 			WP_CLI::error(
 				message: sprintf( 'the value of %1$s could not be obtained.',
-					$constant,
+					$constant, // 1
 				),
 				exit: false,
 			);
@@ -1791,22 +1802,22 @@ final class cli {
 		// set to opposite of current setting.
 		$new_value_message = WP_CLI::runcommand(
 			command: sprintf( 'config set %1$s %2$s --raw',
-				$constant,
-				! ! $current_value->stdout ? 'false' : 'true',
+				$constant, // 1
+				! ! $current_value->stdout ? 'false' : 'true', // 2
 			),
 			options: $runcommand_options,
 		);
 		if ( $new_value_message->return_code == '0' ) {
 			WP_CLI::success(
 				message: sprintf( '%1$s is set to %2$s.',
-					$constant,
-					! $current_value->stdout ? 'true' : 'false',
+					$constant, // 1
+					! $current_value->stdout ? 'true' : 'false', // 2
 				),
 			);
 		} else {
 			WP_CLI::error(
 				message: sprintf( '%1$s could not be updated.',
-					$constant,
+					$constant, // 1
 				),
 				exit: false,
 			);
@@ -1846,16 +1857,16 @@ final class cli {
 			command: sprintf( 'db size %1$s',
 				implode(
 					separator: ' ',
-					array: $this->_prepend_dashes(
+					array: $this->_prepend_string(
 						elements: $arguments,
-					),
+					), // 1
 				),
 			),
 			options: $runcommand_options,
 		);
 		WP_CLI::debug(
 			message: sprintf( '$return->return_code: %1$s',
-				$return->return_code,
+				$return->return_code, // 1
 			),
 		);
 		// something went wrong.
@@ -1900,9 +1911,9 @@ final class cli {
 		if ( file_exists( filename: $directory ) ) {
 			$exec = exec(
 				command: sprintf('%1$s -%2$s %3$s/*',
-					$command,
-					implode( $arguments ),
-					$directory,
+					$command, // 1
+					implode( $arguments ), // 2
+					$directory, // 3
 				),
 				output: $output,
 			);
@@ -1943,28 +1954,26 @@ final class cli {
 			)
 		);
 		return sprintf( '%1$s%2$s',
-			$amount,
-			$unit[0], // get first character.
+			$amount, // 1
+			$unit[0], // 2. get first character.
 		);
 	}
 
 	/**
-	 * Prepend double-dashes to every element in an array. For sets of arguments.
+	 * Prepend string to every element in an array. For sets of arguments.
 	 *
 	 * @param array $elements
+	 * @param string $prefix
 	 *
 	 * @return array
 	 */
-	private function _prepend_dashes(
+	private function _prepend_string(
 		array $elements,
+		string $prefix = '--',
 	):array
 	{
-		$prefix = '--';
 		return array_map(
-			callback: fn ( $element ) => sprintf( '%2$s%1$s',
-				$element,
-				$prefix,
-			),
+			callback: fn ( string $element ):string => $prefix . $element,
 			array: $elements,
 		);
 	}
