@@ -611,7 +611,7 @@ final class cli {
 		);
 		$wp_path = WP_CLI::get_config(
 			key: 'path',
-		) ?? '.';
+		) ?? ABSPATH;
 		// arguments for quick backup, sans leading double-dashes ("--").
 		$quick_backup_args = [
 			'exclude-spam-comments',
