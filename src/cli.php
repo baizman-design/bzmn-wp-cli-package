@@ -854,8 +854,13 @@ final class cli {
 	):void
 	{
 		list( $wpress_backup_file, ) = $args;
+		WP_CLI::log(
+			message: 'Initiating restore...',
+		);
 		// just get the filename, no parent directory.
-		$wpress_backup_file = basename( path: $wpress_backup_file );
+		$wpress_backup_file = basename(
+			path: $wpress_backup_file,
+		);
 		WP_CLI::debug(
 			message: sprintf( '$wpress_backup_file: %1$s',
 				$wpress_backup_file, // 1
