@@ -1527,7 +1527,9 @@ final class cli {
 
 		// https://developers.google.com/speed/webp/docs/cwebp
 		$cwebp_bin = 'cwebp';
-		$cwebp_options = '';
+		$gif2webp_bin = 'gif2webp';
+		$webp_bin = $cwebp_bin;
+		$webp_options = '';
 
 		$delete_original_imagery = WP_CLI\Utils\get_flag_value(
 			assoc_args: $assoc_args,
@@ -1627,7 +1629,6 @@ final class cli {
 				),
 			);
 			$converted_count = 0;
-			$gif_count = 0;
 			$skipped_count = 0;
 			$total_disk_savings = 0;
 			foreach ( $all_posts_and_pages->posts as $post ) {
@@ -1695,17 +1696,9 @@ final class cli {
 					$skipped_count++;
 					continue;
 				}
-				// cwebp cannot handle GIFs!
+				// cwebp cannot handle GIFs. use gif2webp.
 				if ( strtolower( $thumbnail_extension ) == 'gif' ) {
-					WP_CLI::warning(
-						message: sprintf( 'Skipping "%1$s" (ID: %2$d) because it is in GIF format: "%3$s"',
-							$post->post_title, // 1
-							$post->ID, // 2
-							$thumbnail_path, // 3
-						),
-					);
-					$gif_count++;
-					continue;
+					$webp_bin = $gif2webp_bin;
 				}
 				// NOTE: multiple posts/pages may be using a single image. we need to update their database record(s).
 				$webp_filename = sprintf( '%1$s/%2$s.%3$s',
@@ -1777,11 +1770,11 @@ final class cli {
 					continue;
 				}
 				if ( ! $this->dry_run ) {
-					// FIXME: command output was written to screen.
+					// FIXME: command output was written to screen and was not expected to be.
 					$exec = exec(
 						command: sprintf( '%1$s %2$s %3$s -o %4$s',
-							$cwebp_bin, // 1
-							$cwebp_options, // 2
+							$webp_bin, // 1
+							$webp_options, // 2
 							$thumbnail_path, // 3
 							$webp_filename, // 4
 						),
@@ -1892,13 +1885,12 @@ final class cli {
 			}
 			if ( ! $this->dry_run ) {
 				WP_CLI::success(
-					message: sprintf( 'Converted %1$d images to WebP, ignored %2$d GIFs, and skipped %3$d images. Total disk savings: %4$s.',
+					message: sprintf( 'Converted %1$d images to WebP and skipped %2$d images. Total disk savings: %3$s.',
 						$converted_count, // 1
-						$gif_count, // 2
-						$skipped_count, // 3
+						$skipped_count, // 2
 						size_format(
 							bytes: $total_disk_savings,
-						), // 4
+						), // 3
 					),
 				);
 			}
