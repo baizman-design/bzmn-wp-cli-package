@@ -1510,6 +1510,7 @@ final class cli {
 	 *     wp bzmn convert-thumbnails-to-webp --dry-run
 	 *
 	 * @subcommand convert-featured-imagery-to-webp
+	 * @alias convert-featured
 	 */
 	public function convert_featured_imagery_to_webp(
 		array $args = [],
