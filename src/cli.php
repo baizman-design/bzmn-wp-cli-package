@@ -1531,6 +1531,7 @@ final class cli {
 		$gif2webp_bin = 'gif2webp';
 		$webp_bin = $cwebp_bin;
 		$webp_options = '';
+		$upload_dir = wp_upload_dir();
 
 		$delete_original_imagery = WP_CLI\Utils\get_flag_value(
 			assoc_args: $assoc_args,
@@ -1552,6 +1553,14 @@ final class cli {
 			WP_CLI::confirm(
 				question: sprintf( 'Are you sure you want to convert the post thumbnails to WebP%1$s?',
 					$delete_original_imagery ? ' and delete the original imagery' : '', // 1
+				),
+			);
+		}
+
+		if ( ! $this->dry_run ) {
+			WP_CLI::confirm(
+				question: sprintf( 'Did you back up the file uploads directory (%1$s)?',
+					$upload_dir['basedir'], // 1
 				),
 			);
 		}
@@ -1664,7 +1673,6 @@ final class cli {
 					$skipped_count++;
 					continue;
 				}
-				$upload_dir = wp_upload_dir();
 				$thumbnail_path = str_replace(
 					search: $upload_dir['baseurl'],
 					replace: $upload_dir['basedir'],
