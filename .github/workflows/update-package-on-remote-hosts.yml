@@ -64,9 +64,11 @@ jobs:
           done
           echo "# summary" >> ${GITHUB_STEP_SUMMARY}
           if [ ${successes} -gt 0 ]
+          then
           echo "**Total successes:** ${successes}" >> ${GITHUB_STEP_SUMMARY}
           fi
           if [ ${failures} -gt 0 ]
+          then
           echo "**Total failures:** ${failures}" >> ${GITHUB_STEP_SUMMARY}
           fi
           cat ${{ env.logfile }} >> ${GITHUB_STEP_SUMMARY}
