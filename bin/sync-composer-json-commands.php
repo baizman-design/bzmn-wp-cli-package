@@ -21,10 +21,10 @@ $grandparent_directory = dirname(
 	path: __DIR__,
 );
 $command_path = sprintf( '%1$s/src/cli.php',
-	$grandparent_directory,
+	$grandparent_directory, // 1
 );
 $composer = sprintf( '%1$s/composer.json',
-	$grandparent_directory,
+	$grandparent_directory, // 1
 );
 $debugging_flags = [
 	'-d',
@@ -76,7 +76,7 @@ if ( file_exists( filename: $command_path ) ) {
 } else {
 	_die(
 		message: sprintf( 'Could not load command file "%1$s".',
-			$command_path,
+			$command_path, // 1
 		),
 	);
 }
@@ -104,10 +104,10 @@ _debug(
 
 $reflection_command_names = array_map(
 	callback: fn( $method ) => sprintf( '%1$s %2$s',
-		$command_name,
+		$command_name, // 1
 		_get_subcommand_directive(
 			method: $method,
-		),
+		), // 2
 	),
 	array: $public_methods,
 );
@@ -142,7 +142,7 @@ _debug(
 if ( ! $json = file_get_contents( $composer ) ) {
 	_die(
 		message: sprintf( 'Could not load Composer file "%1$s".',
-			$composer,
+			$composer, // 1
 		),
 	);
 }
@@ -151,7 +151,7 @@ if ( ! $json = file_get_contents( $composer ) ) {
 if ( ! $composer_data = json_decode( $json ) ) {
 	_die(
 		message: sprintf( 'Could not decode JSON: %1$s',
-			$json,
+			$json, // 1
 		),
 	);
 }
@@ -187,7 +187,7 @@ if ( ! $force ) {
 	if ( ! array_diff( $reflection_command_names, $composer_data->extra->commands ) ) {
 		_die(
 			message: sprintf( 'There are no new public methods in "%1$s". Aborting.',
-				$command_path,
+				$command_path, // 1
 			),
 			exit_code: 0,
 		);
@@ -222,7 +222,7 @@ if ( ! file_put_contents(
 ) {
 	_die(
 		message: sprintf( 'Could not save updated JSON to Composer file "%1$s".',
-			$composer,
+			$composer, // 1
 		),
 	);
 }
@@ -233,8 +233,8 @@ if ( $force ) {
 }
 _die(
 	message: sprintf( '%1$s "%2$s".',
-		$success_message,
-		$composer,
+		$success_message, // 1
+		$composer, // 2
 	),
 	exit_code: 0,
 );
@@ -282,8 +282,8 @@ function _die (
 	// append newline.
 	$message .= PHP_EOL;
 	if ( $exit_code == 1 ) {
-		$message = sprintf('ERROR: %1$s',
-			$message,
+		$message = sprintf( 'ERROR: %1$s',
+			$message, // 1
 		);
 	}
 	print( $message );
