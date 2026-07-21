@@ -45,6 +45,7 @@
             "bzmn backup",
             "bzmn clear-cloudflare-cache",
             "bzmn clear-sucuri-cache",
+            "bzmn convert-featured-imagery-to-webp",
             "bzmn correct-taxonomy-term-counts",
             "bzmn delete-woocommerce-transients",
             "bzmn disk-usage",

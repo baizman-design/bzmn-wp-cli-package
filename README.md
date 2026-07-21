@@ -151,6 +151,34 @@ wp bzmn clear-sucuri-cache [<filename>]
 
 
 
+### wp bzmn convert-featured-imagery-to-webp
+
+Convert post thumbnail imagery to WebP format and update database references.
+
+~~~
+wp bzmn convert-featured-imagery-to-webp [--delete-original-imagery] [--exclude-post-types=<post_types>] [--dry-run]
+~~~
+
+**OPTIONS**
+
+	[--delete-original-imagery]
+		Delete the original imagery post-conversion.
+
+	[--exclude-post-types=<post_types>]
+		Exclude post types (comma-separated list).
+
+	[--dry-run]
+		Dry run. Do not alter the database or the filesystem.
+
+**EXAMPLES**
+
+    wp bzmn convert-thumbnails-to-webp
+    wp bzmn convert-thumbnails-to-webp --exclude-post-types=post,my-custom-post-type
+    wp bzmn convert-thumbnails-to-webp --delete-original-imagery
+    wp bzmn convert-thumbnails-to-webp --dry-run
+
+
+
 ### wp bzmn correct-taxonomy-term-counts
 
 Correct the taxonomy term counts.

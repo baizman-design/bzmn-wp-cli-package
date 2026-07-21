@@ -1489,6 +1489,427 @@ final class cli {
 	}
 
 	/**
+	 * Convert post thumbnail imagery to WebP format and update database references.
+	 *
+	 * ## OPTIONS
+	 *
+	 * [--delete-original-imagery]
+	 * : Delete the original imagery post-conversion.
+	 *
+	 * [--exclude-post-types=<post_types>]
+	 * : Exclude post types (comma-separated list).
+	 *
+	 * [--dry-run]
+	 * : Dry run. Do not alter the database or the filesystem.
+	 *
+	 * ## EXAMPLES
+	 *
+	 *     wp bzmn convert-thumbnails-to-webp
+	 *     wp bzmn convert-thumbnails-to-webp --exclude-post-types=post,my-custom-post-type
+	 *     wp bzmn convert-thumbnails-to-webp --delete-original-imagery
+	 *     wp bzmn convert-thumbnails-to-webp --dry-run
+	 *
+	 * @subcommand convert-featured-imagery-to-webp
+	 */
+	public function convert_featured_imagery_to_webp(
+		array $args = [],
+		array $assoc_args = [],
+	):void
+	{
+		// get a list of all pages and posts of specific post types.
+		// for each page/post, get the post thumbnail.
+		// if the thumbnail file does not end in ".webp" (or ".gif")...
+		// + convert it
+		// + update the database
+		// + optionally delete the original image
+
+		$webp_extension = 'webp';
+
+		// https://developers.google.com/speed/webp/docs/cwebp
+		$cwebp_bin = 'cwebp';
+		$cwebp_options = '';
+
+		$delete_original_imagery = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'delete-original-imagery',
+			default: false,
+		);
+		$exclude_post_types = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'exclude-post-types',
+			default: '',
+		);
+		$this->dry_run = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'dry-run',
+			default: false,
+		);
+
+		if ( ! $this->dry_run ) {
+			WP_CLI::confirm(
+				question: sprintf( 'Are you sure you want to convert the post thumbnails to WebP%1$s?',
+					$delete_original_imagery ? ' and delete the original imagery' : '', // 1
+				),
+			);
+		}
+
+		$exclusions = [
+			'astra_adv_header',
+			'attachment',
+			'revision',
+			'nav_menu_item',
+			'custom_css',
+			'customize_changeset',
+			'od_url_metrics',
+			'oembed_cache',
+			'scheduled-action',
+			'user_request',
+			'wp_block',
+			'wp_template',
+			'wp_template_part',
+			'wp_global_styles',
+			'wp_navigation',
+			'wp_font_family',
+			'wp_font_face',
+			'view',
+			'view-template',
+			'wpforms',
+			'wpforms-template',
+			'wpa-helper',
+			'project-artwork',
+		];
+		$exclusions = array_merge(
+			$exclusions,
+			explode(
+				separator: ',',
+				string: $exclude_post_types,
+			),
+		);
+
+		$all_post_types = array_diff(
+			get_post_types(),
+			$exclusions,
+		);
+		WP_CLI::debug(
+			print_r(
+				value: $all_post_types,
+				return: 1,
+			),
+		);
+
+		WP_CLI::confirm(
+			question: sprintf( 'Please confirm the following post types whose featured imagery will be converted:' . PHP_EOL . '%1$s' . PHP_EOL,
+				implode(
+					separator: '',
+					array: array_map(
+						callback: fn ( string $type ):string => '+ ' . $type . PHP_EOL,
+						array: $all_post_types,
+					),
+				), // 1
+			),
+		);
+
+		$this->backup_database();
+
+		$all_posts_and_pages = new WP_Query(
+			[
+				'post_type' => $all_post_types,
+				'posts_per_page' => -1,
+				'numberposts' => -1,
+				'post_status' => 'publish',
+			],
+		);
+
+		if ( $all_posts_and_pages->have_posts() ) {
+			WP_CLI::log(
+				message: sprintf( 'Found %1$d published posts and pages.',
+					$all_posts_and_pages->post_count, // 1
+				),
+			);
+			$converted_count = 0;
+			$gif_count = 0;
+			$skipped_count = 0;
+			$total_disk_savings = 0;
+			foreach ( $all_posts_and_pages->posts as $post ) {
+				WP_CLI::log(
+					message: sprintf( 'Working on "%1$s" (ID: %2$d) [%3$s]...',
+						$post->post_title, // 1
+						$post->ID, // 2
+						$post->post_type, // 3
+					),
+				);
+				// no thumbnail, go to next post.
+				if ( ! has_post_thumbnail( post: $post->ID ) ) {
+					WP_CLI::log(
+						message: sprintf( 'Skipping "%1$s" (ID: %2$d) because it does not have a thumbnail.',
+							$post->post_title, // 1
+							$post->ID, // 2
+						),
+					);
+					$skipped_count++;
+					continue;
+				}
+				$post_thumbnail_id = get_post_thumbnail_id(
+					post: $post,
+				);
+				// really no thumbnail, go to next post.
+				if ( ! $post_thumbnail_id ){
+					WP_CLI::warning(
+						message: sprintf( 'Skipping "%1$s" (ID: %2$d) because a thumbnail ID could not be retrieved from the database.',
+							$post->post_title, // 1
+							$post->ID, // 2
+						),
+					);
+					$skipped_count++;
+					continue;
+				}
+				$upload_dir = wp_upload_dir();
+				$thumbnail_path = str_replace(
+					search: $upload_dir['baseurl'],
+					replace: $upload_dir['basedir'],
+					subject: wp_get_attachment_url(
+						attachment_id: $post_thumbnail_id,
+					),
+				);
+				WP_CLI::log(
+					message: sprintf( 'Found thumbnail image: "%1$s"',
+						$thumbnail_path, // 1
+					),
+				);
+				$thumbnail_path_parts = pathinfo(
+					path: $thumbnail_path,
+				);
+				$thumbnail_filename = $thumbnail_path_parts['basename'];
+				$thumbnail_filename_without_extension = $thumbnail_path_parts['filename'];
+				$thumbnail_dirname = $thumbnail_path_parts['dirname'];
+				$thumbnail_extension = $thumbnail_path_parts['extension'];
+				// already in webp format, nothing to do!
+				if ( strtolower( $thumbnail_extension ) == $webp_extension ) {
+					WP_CLI::log(
+						message: sprintf( 'Skipping "%1$s" (ID: %2$d) because its thumbnail is already in WebP format: "%3$s"',
+							$post->post_title, // 1
+							$post->ID, // 2
+							$thumbnail_path, // 3
+						),
+					);
+					$skipped_count++;
+					continue;
+				}
+				// cwebp cannot handle GIFs!
+				if ( strtolower( $thumbnail_extension ) == 'gif' ) {
+					WP_CLI::warning(
+						message: sprintf( 'Skipping "%1$s" (ID: %2$d) because it is in GIF format: "%3$s"',
+							$post->post_title, // 1
+							$post->ID, // 2
+							$thumbnail_path, // 3
+						),
+					);
+					$gif_count++;
+					continue;
+				}
+				// NOTE: multiple posts/pages may be using a single image. we need to update their database record(s).
+				$webp_filename = sprintf( '%1$s/%2$s.%3$s',
+					$thumbnail_dirname, // 1
+					$thumbnail_filename_without_extension, // 2
+					$webp_extension, // 3
+				);
+				// does a webp file already exist?
+				if ( file_exists( filename: $webp_filename ) ) {
+					// update the database only.
+					WP_CLI::log(
+						message: sprintf( '"%1$s" has already been converted to WebP, so we\'re just going to set the featured image in the database.',
+							$thumbnail_path, // 1
+						),
+					);
+					// get attachment ID for image.
+					$attachment_url = str_replace(
+						search: $upload_dir['basedir'],
+						replace: $upload_dir['baseurl'],
+						subject: $webp_filename,
+					);
+					$attachment_id = attachment_url_to_postid(
+						url: $attachment_url,
+					);
+					if ( $attachment_id ) {
+						if ( ! $this->dry_run ) {
+							$meta_key = '_thumbnail_id';
+							// use set_post_thumbnail() instead?
+							$update_database = update_post_meta(
+								post_id: $post->ID,
+								meta_key: $meta_key,
+								meta_value: $attachment_id,
+							);
+							if ( $update_database === false ) {
+								WP_CLI::error(
+									message: sprintf( 'Failed to set the "%3$s" post meta for post ID %1$d to attachment ID %2$d.',
+										$post->ID, // 1
+										$attachment_id, // 2
+										$meta_key, // 3
+									),
+									exit: false,
+								);
+							} else {
+								WP_CLI::success(
+									message: sprintf( 'Successfully set the "%3$s" post meta for post ID %1$d to attachment ID %2$d.',
+										$post->ID, // 1
+										$attachment_id, // 2
+										$meta_key, // 3
+									),
+								);
+							}
+						}
+					} else {
+						WP_CLI::warning(
+							message: sprintf( 'Could not find an attachment ID for URL "%1$s."',
+								$attachment_url, // 1
+							),
+						);
+					}
+				}
+				// sanity check: does the original image exist on the filesystem?
+				if ( ! file_exists( filename: $thumbnail_path ) ) {
+					WP_CLI::warning(
+						message: sprintf( 'The original image "%1$s" does not exist. (It may have been recently converted and deleted.) Skipping.',
+							$thumbnail_path, // 1
+						),
+					);
+					$skipped_count++;
+					continue;
+				}
+				if ( ! $this->dry_run ) {
+					// FIXME: command output was written to screen.
+					$exec = exec(
+						command: sprintf( '%1$s %2$s %3$s -o %4$s',
+							$cwebp_bin, // 1
+							$cwebp_options, // 2
+							$thumbnail_path, // 3
+							$webp_filename, // 4
+						),
+						output: $output,
+						result_code: $result_code,
+					);
+					// FIXME: did not work as expected. The warning was printed even when the cwebp command ran.
+					// no output, or the "cwebp" command is not found.
+					/*
+					if ( empty( $exec ) ) {
+						WP_CLI::warning(
+							message: 'There was no output from the cwebp command. It is not found or another error may have occurred.',
+						);
+					}
+					*/
+					// run internal wp cli command to import media. (could be replaced with PHP functions.)
+					$media_import_command = WP_CLI::runcommand(
+						command: sprintf( 'media import "%1$s" --post_id=%2$d --skip-copy --featured_image --porcelain',
+							$webp_filename, // 1
+							$post->ID, // 2
+						),
+						options: [
+							'return'     => 'all',  // capture and return output.
+							'launch'     => false, // reuse the current process.
+							'exit_error' => true, // halt script execution on error.
+						],
+					);
+					if ( $media_import_command->return_code == '1' ) {
+						if ( $media_import_command->stdout ) {
+							WP_CLI::error(
+								message: $media_import_command->stdout,
+								exit: false,
+							);
+						}
+						if ( $media_import_command->stderr ) {
+							WP_CLI::log(
+								message: $media_import_command->stderr,
+							);
+							WP_CLI::halt(
+								return_code: 1,
+							);
+						}
+					}
+					$disk_savings = wp_filesize( path: $thumbnail_path ) - wp_filesize( path: $webp_filename );
+					$total_disk_savings += $disk_savings;
+					WP_CLI::success(
+						message: sprintf( 'Successfully replaced "%1$s" (%2$s) with "%3$s" (%4$s), a savings of %5$s.',
+							$thumbnail_path, // 1
+							size_format(
+								bytes: wp_filesize(
+									path: $thumbnail_path,
+								),
+							), // 2
+							$webp_filename, // 3
+							size_format(
+								bytes: wp_filesize(
+									path: $webp_filename,
+								),
+							), // 4
+							size_format(
+								bytes: $disk_savings,
+							), // 5
+						),
+					);
+					$converted_count++;
+				} else {
+					WP_CLI::log(
+						message: 'Skipping the conversion and import...',
+					);
+				}
+
+				// delete original image.
+				if ( $delete_original_imagery ) {
+					if ( ! $this->dry_run ) {
+						WP_CLI::log(
+							message: sprintf( 'Deleting file "%1$s"...',
+								$thumbnail_path, // 1
+							),
+						);
+						$deleted_filename_size = wp_filesize(
+							path: $thumbnail_path,
+						);
+						$delete_status         = @unlink(
+							filename: realpath(
+								path: $thumbnail_path,
+							),
+						);
+						if ( $delete_status ) {
+							WP_CLI::success(
+								message: sprintf( 'Successfully deleted file "%1$s."',
+									$thumbnail_path, // 1
+								),
+							);
+							$total_disk_savings += $deleted_filename_size;
+						} else {
+							WP_CLI::warning(
+								message: sprintf( 'Could not delete file "%1$s."',
+									$thumbnail_path, // 1
+								),
+							);
+						}
+					} else {
+						WP_CLI::log(
+							message: 'Skipping deletion of original imagery...',
+						);
+					}
+				}
+			}
+			if ( ! $this->dry_run ) {
+				WP_CLI::success(
+					message: sprintf( 'Converted %1$d images to WebP, ignored %2$d GIFs, and skipped %3$d images. Total disk savings: %4$s.',
+						$converted_count, // 1
+						$gif_count, // 2
+						$skipped_count, // 3
+						size_format(
+							bytes: $total_disk_savings,
+						), // 4
+					),
+				);
+			}
+		} else {
+			WP_CLI::error(
+				message: 'No posts found. Aborting.',
+			);
+		}
+	}
+
+	/**
 	 * Create a MySQL dump of the database.
 	 *
 	 * @param string $file
@@ -1505,7 +1926,7 @@ final class cli {
 		$runcommand_options_defaults = [
 			'return' => 'all', // capture and return output.
 			'launch' => false, // reuse the current process.
-			'exit_error' => false, // halt script execution on error.
+			'exit_error' => true, // halt script execution on error.
 		];
 		$runcommand_options = wp_parse_args (
 			args: $override_options,
@@ -1923,7 +2344,7 @@ final class cli {
 				output: $output,
 			);
 			// no output, or the "du" command is not found.
-			if ( empty( $exec )) {
+			if ( empty( $exec ) ) {
 				return [];
 			}
 			return $output;
