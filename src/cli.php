@@ -1608,8 +1608,8 @@ final class cli {
 			),
 		);
 
-		WP_CLI::confirm(
-			question: sprintf( 'Please confirm the following post types whose featured imagery will be converted:' . PHP_EOL . '%1$s' . PHP_EOL,
+		WP_CLI::log(
+			message: sprintf( 'Please confirm the following post types whose featured imagery will be converted:' . PHP_EOL . '%1$s' . PHP_EOL,
 				implode(
 					separator: '',
 					array: array_map(
@@ -1618,6 +1618,9 @@ final class cli {
 					),
 				), // 1
 			),
+		);
+		WP_CLI::confirm(
+			question: 'Proceed?',
 		);
 
 		$this->backup_database();
@@ -1891,6 +1894,7 @@ final class cli {
 				}
 			}
 			if ( ! $this->dry_run ) {
+				// TODO: split savings into file compression and file deletion.
 				WP_CLI::success(
 					message: sprintf( 'Converted %1$d images to WebP and skipped %2$d images. Total disk savings: %3$s.',
 						$converted_count, // 1
