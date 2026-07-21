@@ -1518,7 +1518,7 @@ final class cli {
 	{
 		// get a list of all pages and posts of specific post types.
 		// for each page/post, get the post thumbnail.
-		// if the thumbnail file does not end in ".webp" (or ".gif")...
+		// if the thumbnail file does not end in ".webp"...
 		// + convert it
 		// + update the database
 		// + optionally delete the original image
@@ -1856,24 +1856,23 @@ final class cli {
 						$deleted_filename_size = wp_filesize(
 							path: $thumbnail_path,
 						);
-						$delete_status         = @unlink(
-							filename: realpath(
-								path: $thumbnail_path,
-							),
+						$delete_status = wp_delete_attachment(
+							post_id: $post_thumbnail_id,
+							force_delete: true,
 						);
-						if ( $delete_status ) {
+						if ( $delete_status === false || is_null( $delete_status ) ) {
+							WP_CLI::warning(
+								message: sprintf( 'Could not delete file "%1$s."',
+									$thumbnail_path, // 1
+								),
+							);
+						} else {
 							WP_CLI::success(
 								message: sprintf( 'Successfully deleted file "%1$s."',
 									$thumbnail_path, // 1
 								),
 							);
 							$total_disk_savings += $deleted_filename_size;
-						} else {
-							WP_CLI::warning(
-								message: sprintf( 'Could not delete file "%1$s."',
-									$thumbnail_path, // 1
-								),
-							);
 						}
 					} else {
 						WP_CLI::log(
