@@ -1643,12 +1643,15 @@ final class cli {
 			$converted_count = 0;
 			$skipped_count = 0;
 			$total_disk_savings = 0;
+			$post_counter = 1;
 			foreach ( $all_posts_and_pages->posts as $post ) {
 				WP_CLI::log(
-					message: sprintf( 'Working on "%1$s" (ID: %2$d) [%3$s]...',
+					message: sprintf( 'Working on "%1$s" (ID: %2$d) [%3$s] - %4$d of %5$d ...',
 						$post->post_title, // 1
 						$post->ID, // 2
 						$post->post_type, // 3
+						$post_counter, // 4
+						$all_posts_and_pages->post_count, // 5
 					),
 				);
 				// no thumbnail, go to next post.
@@ -1892,6 +1895,7 @@ final class cli {
 						);
 					}
 				}
+				$post_counter++;
 			}
 			if ( ! $this->dry_run ) {
 				// TODO: split savings into file compression and file deletion.
