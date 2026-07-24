@@ -1491,6 +1491,9 @@ final class cli {
 	/**
 	 * Convert post thumbnail imagery to WebP format and update database references.
 	 *
+	 * External dependencies: cwebp and gif2webp.
+	 * TODO: make pure PHP image conversion.
+	 *
 	 * ## OPTIONS
 	 *
 	 * [--delete-original-imagery]
