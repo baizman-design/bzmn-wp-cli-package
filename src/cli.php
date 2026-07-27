@@ -1489,12 +1489,15 @@ final class cli {
 	}
 
 	/**
-	 * Convert post thumbnail imagery to WebP format and update database references.
+	 * Convert imagery to WebP format and update database references.
 	 *
 	 * External dependencies: cwebp and gif2webp.
 	 * TODO: make pure PHP image conversion.
 	 *
 	 * ## OPTIONS
+	 *
+	 * [--image-field=<field>]
+	 * : A custom field housing an image URL. Default: post thumbnail.
 	 *
 	 * [--delete-original-imagery]
 	 * : Delete the original imagery post-conversion.
@@ -1507,28 +1510,28 @@ final class cli {
 	 *
 	 * ## EXAMPLES
 	 *
-	 *     wp bzmn convert-thumbnails-to-webp
-	 *     wp bzmn convert-thumbnails-to-webp --exclude-post-types=post,my-custom-post-type
-	 *     wp bzmn convert-thumbnails-to-webp --delete-original-imagery
-	 *     wp bzmn convert-thumbnails-to-webp --dry-run
+	 *     wp bzmn convert-imagery-to-webp --image-field=gallery-image
+	 *     wp bzmn convert-imagery-to-webp --exclude-post-types=post,my-custom-post-type
+	 *     wp bzmn convert-imagery-to-webp --delete-original-imagery
+	 *     wp bzmn convert-imagery-to-webp --dry-run
 	 *
-	 * @subcommand convert-featured-imagery-to-webp
-	 * @alias convert-featured
+	 * @subcommand convert-imagery-to-webp
+	 * @alias convert-imagery
+	 * @throws ExitException
 	 */
-	public function convert_featured_imagery_to_webp(
+	public function convert_imagery_to_webp(
 		array $args = [],
 		array $assoc_args = [],
 	):void
 	{
 		// get a list of all pages and posts of specific post types.
-		// for each page/post, get the post thumbnail.
-		// if the thumbnail file does not end in ".webp"...
+		// for each page/post, get the post thumbnail or custom field.
+		// if the image does not end in ".webp"...
 		// + convert it
 		// + update the database
 		// + optionally delete the original image
 
 		$webp_extension = 'webp';
-
 		// https://developers.google.com/speed/webp/docs/cwebp
 		$cwebp_bin = 'cwebp';
 		$gif2webp_bin = 'gif2webp';
@@ -1536,6 +1539,11 @@ final class cli {
 		$webp_options = '';
 		$upload_dir = wp_upload_dir();
 
+		$image_field = WP_CLI\Utils\get_flag_value(
+			assoc_args: $assoc_args,
+			flag: 'image-field',
+			default: 'post-thumbnail',
+		);
 		$delete_original_imagery = WP_CLI\Utils\get_flag_value(
 			assoc_args: $assoc_args,
 			flag: 'delete-original-imagery',
@@ -1551,7 +1559,7 @@ final class cli {
 			flag: 'dry-run',
 			default: false,
 		);
-
+		$featured_imagery_mode = $image_field == 'post-thumbnail';
 		if ( ! $this->dry_run ) {
 			WP_CLI::confirm(
 				question: sprintf( 'Are you sure you want to convert the post thumbnails to WebP%1$s?',
@@ -1559,7 +1567,6 @@ final class cli {
 				),
 			);
 		}
-
 		if ( ! $this->dry_run ) {
 			WP_CLI::confirm(
 				question: sprintf( 'Did you back up the file uploads directory (%1$s)?',
@@ -1567,7 +1574,6 @@ final class cli {
 				),
 			);
 		}
-
 		$exclusions = [
 			'astra_adv_header',
 			'attachment',
@@ -1599,7 +1605,6 @@ final class cli {
 				string: $exclude_post_types,
 			),
 		);
-
 		$all_post_types = array_diff(
 			get_post_types(),
 			$exclusions,
@@ -1610,9 +1615,8 @@ final class cli {
 				return: 1,
 			),
 		);
-
 		WP_CLI::log(
-			message: sprintf( 'Please confirm the following post types whose featured imagery will be converted:' . PHP_EOL . '%1$s' . PHP_EOL,
+			message: sprintf( 'Please confirm the following post types whose imagery in the "%2$s" field will be converted:' . PHP_EOL . '%1$s',
 				implode(
 					separator: '',
 					array: array_map(
@@ -1620,6 +1624,7 @@ final class cli {
 						array: $all_post_types,
 					),
 				), // 1
+				$image_field, // 2
 			),
 		);
 		WP_CLI::confirm(
@@ -1628,14 +1633,39 @@ final class cli {
 
 		$this->backup_database();
 
-		$all_posts_and_pages = new WP_Query(
-			[
-				'post_type' => $all_post_types,
-				'posts_per_page' => -1,
-				'numberposts' => -1,
-				'post_status' => 'publish',
-			],
-		);
+		if ( $featured_imagery_mode ) {
+			$all_posts_and_pages = new WP_Query(
+				[
+					'post_type' => $all_post_types,
+					'posts_per_page' => -1,
+					'numberposts' => -1,
+					'post_status' => 'publish',
+				],
+			);
+		} else {
+			// retrieve posts where the custom field isn't empty.
+			$all_posts_and_pages = new WP_Query(
+				[
+					'post_type' => $all_post_types,
+					'posts_per_page' => -1,
+					'numberposts' => -1,
+					'post_status' => 'publish',
+					'meta_query' => [
+						[
+							'key' => $image_field,
+							'compare' => 'EXISTS',
+						],
+						[
+							'key' => $image_field,
+							'compare' => '!=',
+							'value' => '',
+						],
+						'relation' => 'AND',
+					],
+
+				],
+			);
+		}
 
 		if ( $all_posts_and_pages->have_posts() ) {
 			WP_CLI::log(
@@ -1657,133 +1687,150 @@ final class cli {
 						$all_posts_and_pages->post_count, // 5
 					),
 				);
-				// no thumbnail, go to next post.
-				if ( ! has_post_thumbnail( post: $post->ID ) ) {
-					WP_CLI::log(
-						message: sprintf( 'Skipping "%1$s" (ID: %2$d) because it does not have a thumbnail.',
-							$post->post_title, // 1
-							$post->ID, // 2
-						),
+				if ( $featured_imagery_mode ) {
+					// if there's no thumbnail, go to next post.
+					if ( ! has_post_thumbnail( post: $post->ID ) ) {
+						WP_CLI::log(
+							message: sprintf( 'Skipping "%1$s" (ID: %2$d) because it does not have a thumbnail.',
+								$post->post_title, // 1
+								$post->ID, // 2
+							),
+						);
+						$skipped_count ++;
+						continue;
+					}
+					$post_thumbnail_id = get_post_thumbnail_id(
+						post: $post->ID,
 					);
-					$skipped_count++;
-					continue;
+					// really no thumbnail, go to next post.
+					if ( ! $post_thumbnail_id ){
+						WP_CLI::warning(
+							message: sprintf( 'Skipping "%1$s" (ID: %2$d) because a thumbnail ID could not be retrieved from the database.',
+								$post->post_title, // 1
+								$post->ID, // 2
+							),
+						);
+						$skipped_count++;
+						$post_counter++;
+						continue;
+					}
 				}
-				$post_thumbnail_id = get_post_thumbnail_id(
-					post: $post,
-				);
-				// really no thumbnail, go to next post.
-				if ( ! $post_thumbnail_id ){
+				if ( $featured_imagery_mode ) {
+					$attachment_url = wp_get_attachment_url(
+						attachment_id: $post_thumbnail_id,
+					);
+				} else {
+					$attachment_url = get_post_meta(
+						post_id: $post->ID,
+						key: $image_field,
+						single: true,
+					);
+					// is it a URL?
+					if ( filter_var( value: $attachment_url, filter: FILTER_VALIDATE_URL ) === false ) {
+						WP_CLI::warning(
+							message: sprintf( 'The value of "%1$s" is not a URL: "%2$s".',
+								$image_field, // 1
+								$attachment_url, // 2
+							),
+						);
+					}
+				}
+				if ( ! $attachment_url ) {
 					WP_CLI::warning(
-						message: sprintf( 'Skipping "%1$s" (ID: %2$d) because a thumbnail ID could not be retrieved from the database.',
+						message: sprintf( 'Skipping "%1$s" (ID: %2$d) because the "%3$s" field is empty.',
 							$post->post_title, // 1
 							$post->ID, // 2
+							$image_field, // 3
 						),
 					);
 					$skipped_count++;
+					$post_counter++;
 					continue;
 				}
-				$thumbnail_path = str_replace(
+				$image_path = str_replace(
 					search: $upload_dir['baseurl'],
 					replace: $upload_dir['basedir'],
-					subject: wp_get_attachment_url(
-						attachment_id: $post_thumbnail_id,
-					),
+					subject: $attachment_url,
 				);
 				WP_CLI::log(
-					message: sprintf( 'Found thumbnail image: "%1$s"',
-						$thumbnail_path, // 1
+					message: sprintf( 'Found image: "%1$s"',
+						$image_path, // 1
 					),
 				);
-				$thumbnail_path_parts = pathinfo(
-					path: $thumbnail_path,
+				$image_path_parts = pathinfo(
+					path: $image_path,
 				);
-				$thumbnail_filename = $thumbnail_path_parts['basename'];
-				$thumbnail_filename_without_extension = $thumbnail_path_parts['filename'];
-				$thumbnail_dirname = $thumbnail_path_parts['dirname'];
-				$thumbnail_extension = $thumbnail_path_parts['extension'];
+				$image_filename_without_extension = $image_path_parts['filename'];
+				$image_dirname = $image_path_parts['dirname'];
+				$image_extension = $image_path_parts['extension'];
 				// already in webp format, nothing to do!
-				if ( strtolower( $thumbnail_extension ) == $webp_extension ) {
+				if ( strtolower( $image_extension ) == $webp_extension ) {
 					WP_CLI::log(
 						message: sprintf( 'Skipping "%1$s" (ID: %2$d) because its thumbnail is already in WebP format: "%3$s"',
 							$post->post_title, // 1
 							$post->ID, // 2
-							$thumbnail_path, // 3
+							$image_path, // 3
 						),
 					);
 					$skipped_count++;
+					$post_counter++;
 					continue;
 				}
 				// cwebp cannot handle GIFs. use gif2webp.
-				if ( strtolower( $thumbnail_extension ) == 'gif' ) {
-					$webp_bin = $gif2webp_bin;
-				}
+				$webp_bin = strtolower( $image_extension ) == 'gif' ? $gif2webp_bin : $cwebp_bin;
 				// NOTE: multiple posts/pages may be using a single image. we need to update their database record(s).
 				$webp_filename = sprintf( '%1$s/%2$s.%3$s',
-					$thumbnail_dirname, // 1
-					$thumbnail_filename_without_extension, // 2
+					$image_dirname, // 1
+					$image_filename_without_extension, // 2
 					$webp_extension, // 3
 				);
 				// does a webp file already exist?
 				if ( file_exists( filename: $webp_filename ) ) {
 					// update the database only.
 					WP_CLI::log(
-						message: sprintf( '"%1$s" has already been converted to WebP, so we\'re just going to set the featured image in the database.',
-							$thumbnail_path, // 1
+						message: sprintf( '"%1$s" has already been converted to WebP, so we\'re just going to update the database.',
+							$image_path, // 1
 						),
 					);
-					// get attachment ID for image.
+					$meta_key = $featured_imagery_mode ? '_thumbnail_id' : $image_field;
 					$attachment_url = str_replace(
 						search: $upload_dir['basedir'],
 						replace: $upload_dir['baseurl'],
 						subject: $webp_filename,
 					);
-					$attachment_id = attachment_url_to_postid(
-						url: $attachment_url,
-					);
-					if ( $attachment_id ) {
-						if ( ! $this->dry_run ) {
-							$meta_key = '_thumbnail_id';
-							// use set_post_thumbnail() instead?
-							$update_database = update_post_meta(
-								post_id: $post->ID,
-								meta_key: $meta_key,
-								meta_value: $attachment_id,
+					if ( $featured_imagery_mode) {
+						// get attachment ID for featured image.
+						$attachment_id = attachment_url_to_postid(
+							url: $attachment_url,
+						);
+						if ( ! $attachment_id ) {
+							WP_CLI::warning(
+								message: sprintf( 'Could not find an attachment ID for URL "%1$s."',
+									$attachment_url, // 1
+								),
 							);
-							if ( $update_database === false ) {
-								WP_CLI::error(
-									message: sprintf( 'Failed to set the "%3$s" post meta for post ID %1$d to attachment ID %2$d.',
-										$post->ID, // 1
-										$attachment_id, // 2
-										$meta_key, // 3
-									),
-									exit: false,
-								);
-							} else {
-								WP_CLI::success(
-									message: sprintf( 'Successfully set the "%3$s" post meta for post ID %1$d to attachment ID %2$d.',
-										$post->ID, // 1
-										$attachment_id, // 2
-										$meta_key, // 3
-									),
-								);
-							}
 						}
+						$meta_value = $attachment_id; // ID for featured image.
 					} else {
-						WP_CLI::warning(
-							message: sprintf( 'Could not find an attachment ID for URL "%1$s."',
-								$attachment_url, // 1
-							),
+						$meta_value = $attachment_url; // URL for custom fields.
+					}
+					if ( ! $this->dry_run ) {
+						$this->update_post_meta(
+							post_id: $post->ID,
+							meta_key: $meta_key,
+							meta_value: $meta_value,
 						);
 					}
 				}
 				// sanity check: does the original image exist on the filesystem?
-				if ( ! file_exists( filename: $thumbnail_path ) ) {
+				if ( ! file_exists( filename: $image_path ) ) {
 					WP_CLI::warning(
 						message: sprintf( 'The original image "%1$s" does not exist. (It may have been recently converted and deleted.) Skipping.',
-							$thumbnail_path, // 1
+							$image_path, // 1
 						),
 					);
 					$skipped_count++;
+					$post_counter++;
 					continue;
 				}
 				if ( ! $this->dry_run ) {
@@ -1792,7 +1839,7 @@ final class cli {
 						command: sprintf( '%1$s %2$s %3$s -o %4$s',
 							$webp_bin, // 1
 							$webp_options, // 2
-							$thumbnail_path, // 3
+							$image_path, // 3
 							$webp_filename, // 4
 						),
 						output: $output,
@@ -1808,11 +1855,15 @@ final class cli {
 					}
 					*/
 					// run internal wp cli command to import media. (could be replaced with PHP functions.)
+					$command = sprintf( 'media import "%1$s" --post_id=%2$d --skip-copy --porcelain',
+						$webp_filename, // 1
+						$post->ID, // 2
+					);
+					if ( $featured_imagery_mode ) {
+						$command .= ' --featured_image';
+					}
 					$media_import_command = WP_CLI::runcommand(
-						command: sprintf( 'media import "%1$s" --post_id=%2$d --skip-copy --featured_image --porcelain',
-							$webp_filename, // 1
-							$post->ID, // 2
-						),
+						command: $command,
 						options: [
 							'return'     => 'all',  // capture and return output.
 							'launch'     => false, // reuse the current process.
@@ -1835,14 +1886,24 @@ final class cli {
 							);
 						}
 					}
-					$disk_savings = wp_filesize( path: $thumbnail_path ) - wp_filesize( path: $webp_filename );
+					if ( ! $featured_imagery_mode ) {
+						// update the custom field value with the new URL.
+						$this->update_post_meta(
+							post_id: $post->ID,
+							meta_key: $image_field,
+							meta_value: wp_get_attachment_url(
+								attachment_id: $media_import_command->stdout,
+							),
+						);
+					}
+					$disk_savings = wp_filesize( path: $image_path ) - wp_filesize( path: $webp_filename );
 					$total_disk_savings += $disk_savings;
 					WP_CLI::success(
 						message: sprintf( 'Successfully replaced "%1$s" (%2$s) with "%3$s" (%4$s), a savings of %5$s.',
-							$thumbnail_path, // 1
+							$image_path, // 1
 							size_format(
 								bytes: wp_filesize(
-									path: $thumbnail_path,
+									path: $image_path,
 								),
 							), // 2
 							$webp_filename, // 3
@@ -1868,26 +1929,33 @@ final class cli {
 					if ( ! $this->dry_run ) {
 						WP_CLI::log(
 							message: sprintf( 'Deleting file "%1$s"...',
-								$thumbnail_path, // 1
+								$image_path, // 1
 							),
 						);
 						$deleted_filename_size = wp_filesize(
-							path: $thumbnail_path,
+							path: $image_path,
 						);
+						if ( $featured_imagery_mode ) {
+							$image_attachment_id = $post_thumbnail_id;
+						} else {
+							$image_attachment_id = attachment_url_to_postid(
+								url: $attachment_url,
+							);
+						}
 						$delete_status = wp_delete_attachment(
-							post_id: $post_thumbnail_id,
+							post_id: $image_attachment_id,
 							force_delete: true,
 						);
 						if ( $delete_status === false || is_null( $delete_status ) ) {
 							WP_CLI::warning(
 								message: sprintf( 'Could not delete file "%1$s."',
-									$thumbnail_path, // 1
+									$image_path, // 1
 								),
 							);
 						} else {
 							WP_CLI::success(
 								message: sprintf( 'Successfully deleted file "%1$s."',
-									$thumbnail_path, // 1
+									$image_path, // 1
 								),
 							);
 							$total_disk_savings += $deleted_filename_size;
@@ -1903,7 +1971,7 @@ final class cli {
 			if ( ! $this->dry_run ) {
 				// TODO: split savings into file compression and file deletion.
 				WP_CLI::success(
-					message: sprintf( 'Converted %1$d images to WebP and skipped %2$d images. Total disk savings: %3$s.',
+					message: sprintf( 'Converted %1$d images to WebP and skipped %2$d. Total disk savings: %3$s.',
 						$converted_count, // 1
 						$skipped_count, // 2
 						size_format(
@@ -1911,10 +1979,16 @@ final class cli {
 						), // 3
 					),
 				);
+			} else {
+				WP_CLI::success(
+					message: sprintf( '[DRY-RUN] Skipped conversion of %1$d images to WebP.',
+						$all_posts_and_pages->post_count, // 1
+					),
+				);
 			}
 		} else {
 			WP_CLI::error(
-				message: 'No posts found. Aborting.',
+				message: 'No posts found.',
 			);
 		}
 	}
@@ -2327,6 +2401,48 @@ final class cli {
 			);
 		}
 		return $return;
+	}
+
+	/**
+	 * Update post meta data.
+	 *
+	 * @param int $post_id
+	 * @param string $meta_key
+	 * @param mixed $meta_value
+	 *
+	 * @return void
+	 * @throws ExitException
+	 */
+	private function update_post_meta(
+		int $post_id,
+		string $meta_key,
+		mixed $meta_value,
+	):void
+	{
+		// use set_post_thumbnail() instead for thumbnails?
+		$update_database = update_post_meta(
+			post_id: $post_id,
+			meta_key: $meta_key,
+			meta_value: $meta_value,
+		);
+		if ( $update_database === false ) {
+			WP_CLI::error(
+				message: sprintf( 'Failed to set the "%3$s" post meta for post ID %1$d to attachment ID %2$s.',
+					$post_id, // 1
+					$meta_value, // 2
+					$meta_key, // 3
+				),
+				exit: false,
+			);
+		} else {
+			WP_CLI::success(
+				message: sprintf( 'Successfully set the "%3$s" post meta for post ID %1$d to attachment ID %2$d.',
+					$post_id, // 1
+					$meta_value, // 2
+					$meta_key, // 3
+				),
+			);
+		}
 	}
 
 	/**
