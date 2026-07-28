@@ -151,15 +151,21 @@ wp bzmn clear-sucuri-cache [<filename>]
 
 
 
-### wp bzmn convert-featured-imagery-to-webp
+### wp bzmn convert-imagery-to-webp
 
-Convert post thumbnail imagery to WebP format and update database references.
+Convert imagery to WebP format and update database references.
 
 ~~~
-wp bzmn convert-featured-imagery-to-webp [--delete-original-imagery] [--exclude-post-types=<post_types>] [--dry-run]
+wp bzmn convert-imagery-to-webp [--image-field=<field>] [--delete-original-imagery] [--exclude-post-types=<post_types>] [--dry-run]
 ~~~
+
+External dependencies: cwebp and gif2webp.
+TODO: make pure PHP image conversion.
 
 **OPTIONS**
+
+	[--image-field=<field>]
+		A custom field housing an image URL. Default: post thumbnail.
 
 	[--delete-original-imagery]
 		Delete the original imagery post-conversion.
@@ -172,10 +178,10 @@ wp bzmn convert-featured-imagery-to-webp [--delete-original-imagery] [--exclude-
 
 **EXAMPLES**
 
-    wp bzmn convert-thumbnails-to-webp
-    wp bzmn convert-thumbnails-to-webp --exclude-post-types=post,my-custom-post-type
-    wp bzmn convert-thumbnails-to-webp --delete-original-imagery
-    wp bzmn convert-thumbnails-to-webp --dry-run
+    wp bzmn convert-imagery-to-webp --image-field=gallery-image
+    wp bzmn convert-imagery-to-webp --exclude-post-types=post,my-custom-post-type
+    wp bzmn convert-imagery-to-webp --delete-original-imagery
+    wp bzmn convert-imagery-to-webp --dry-run
 
 
 
