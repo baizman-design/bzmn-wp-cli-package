@@ -52,8 +52,10 @@ jobs:
           for remote_host in ${remote_hosts//$'\r'/''}
           do
           echo "# wp @${remote_host} package update" | tee -a ${{ env.logfile }}
+          echo '```' >> ${{ env.logfile }}
           wp @${remote_host} package update | tee -a ${{ env.logfile }}
           return=${PIPESTATUS[0]}
+          echo '```' >> ${{ env.logfile }}
           if [ ${return} -ne 0 ]
           then
           echo "![${{ env.red }}](https://placeholder.baizmandesign.com/placeholder.php?format=png&color=${{ env.red }}&shape=circle) **ERROR:** \`wp @${remote_host} package update\` failed." | tee -a ${{ env.logfile }}
